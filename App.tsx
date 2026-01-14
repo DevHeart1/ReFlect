@@ -6,6 +6,7 @@ import { JournalModal } from './components/JournalModal';
 import { TemplatesView } from './components/TemplatesView';
 import { TemplateBuilder } from './components/TemplateBuilder';
 import { PrivacySettings } from './components/PrivacySettings';
+import { YearReport } from './components/YearReport';
 import { JournalEntry, ViewState } from './types';
 
 // Initial Mock Data
@@ -72,6 +73,9 @@ const App: React.FC = () => {
     }
     if (currentView === ViewState.SETTINGS) {
       return <PrivacySettings />;
+    }
+    if (currentView === ViewState.YEAR_REPORT) {
+      return <YearReport />;
     }
 
     // Default Dashboard View

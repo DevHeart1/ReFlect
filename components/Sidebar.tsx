@@ -12,7 +12,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, 
   const navItems = [
     { id: ViewState.DASHBOARD, label: 'Journal', icon: 'book' },
     { id: ViewState.INSIGHTS, label: 'Insights', icon: 'bar_chart' },
-    { id: ViewState.JOURNAL, label: 'Mood Tracker', icon: 'sentiment_satisfied' }, // Mapping roughly to UI
+    { id: ViewState.YEAR_REPORT, label: 'Year Report', icon: 'auto_awesome' },
+    { id: ViewState.JOURNAL, label: 'Mood Tracker', icon: 'sentiment_satisfied' }, 
     { id: ViewState.SETTINGS, label: 'Settings', icon: 'settings' },
   ];
 
