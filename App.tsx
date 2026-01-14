@@ -7,6 +7,10 @@ import { TemplatesView } from './components/TemplatesView';
 import { TemplateBuilder } from './components/TemplateBuilder';
 import { PrivacySettings } from './components/PrivacySettings';
 import { YearReport } from './components/YearReport';
+import { JournalEditor } from './components/JournalEditor';
+import { PersonalInsights } from './components/PersonalInsights';
+import { DailyMoodTracker } from './components/DailyMoodTracker';
+import { SignIn } from './components/SignIn';
 import { JournalEntry, ViewState } from './types';
 
 // Initial Mock Data
@@ -36,6 +40,7 @@ const INITIAL_ENTRIES: JournalEntry[] = [
 ];
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<ViewState>(ViewState.DASHBOARD);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,6 +59,7 @@ const App: React.FC = () => {
       colorClass: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
     };
     setEntries([newEntry, ...entries]);
+    setCurrentView(ViewState.DASHBOARD);
   };
 
   const renderContent = () => {
@@ -76,6 +82,20 @@ const App: React.FC = () => {
     }
     if (currentView === ViewState.YEAR_REPORT) {
       return <YearReport />;
+    }
+    if (currentView === ViewState.INSIGHTS) {
+      return <PersonalInsights />;
+    }
+    if (currentView === ViewState.EDITOR) {
+      return (
+        <JournalEditor 
+          onBack={() => setCurrentView(ViewState.DASHBOARD)}
+          onSave={handleSaveEntry}
+        />
+      );
+    }
+    if (currentView === ViewState.JOURNAL) {
+      return <DailyMoodTracker />;
     }
 
     // Default Dashboard View
@@ -127,7 +147,7 @@ const App: React.FC = () => {
                   <p className="text-gray-500 dark:text-gray-300 mb-6 leading-relaxed">Capture your thoughts or try an AI suggestion to get started with your mindfulness practice today.</p>
                   <div className="flex flex-wrap items-center gap-4">
                     <button 
-                      onClick={() => setIsModalOpen(true)}
+                      onClick={() => setCurrentView(ViewState.EDITOR)}
                       className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-lg font-medium transition-all shadow-lg shadow-primary/30 transform active:scale-95"
                     >
                       <span className="material-symbols-outlined">edit_note</span>
@@ -198,11 +218,16 @@ const App: React.FC = () => {
           </div>
 
           {/* Recent Entries Section */}
-          <RecentEntries entries={entries} onNewEntry={() => setIsModalOpen(true)} />
+          <RecentEntries entries={entries} onNewEntry={() => setCurrentView(ViewState.EDITOR)} />
         </div>
       </div>
     );
   };
+
+  // Auth Guard
+  if (!isAuthenticated) {
+    return <SignIn onSignIn={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <div className="flex h-screen bg-background-light dark:bg-background-dark text-[#131516] dark:text-[#f1f3f3] overflow-hidden font-display">
@@ -215,7 +240,7 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <main className={`flex-1 flex flex-col h-full relative z-10 w-full ${
-        currentView === ViewState.TEMPLATE_BUILDER || currentView === ViewState.SETTINGS 
+        currentView === ViewState.TEMPLATE_BUILDER || currentView === ViewState.SETTINGS || currentView === ViewState.EDITOR
           ? 'overflow-hidden' 
           : 'overflow-y-auto'
       }`}>

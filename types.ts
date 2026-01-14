@@ -22,7 +22,8 @@ export enum ViewState {
   SETTINGS = 'SETTINGS',
   TEMPLATES = 'TEMPLATES',
   TEMPLATE_BUILDER = 'TEMPLATE_BUILDER',
-  YEAR_REPORT = 'YEAR_REPORT'
+  YEAR_REPORT = 'YEAR_REPORT',
+  EDITOR = 'EDITOR'
 }
 
 export interface TemplateBlock {

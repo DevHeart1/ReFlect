@@ -6,7 +6,7 @@
     <title>Re-Flect Dashboard</title>
     
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300&display=swap" rel="stylesheet"/>
     
     <!-- Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -25,14 +25,19 @@
                         "background-dark": "#232629",
                         "card-light": "#ffffff",
                         "card-dark": "#2d3135",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#2d3135",
+                        "accent": "#CCAB48",
                     },
                     fontFamily: {
-                        "display": ["Manrope", "sans-serif"]
+                        "display": ["Manrope", "sans-serif"],
+                        "serif": ["Merriweather", "serif"],
                     },
                     borderRadius: {"DEFAULT": "0.5rem", "lg": "0.75rem", "xl": "1rem", "full": "9999px"},
                     boxShadow: {
                         'soft': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
                         'glow': '0 0 15px rgba(42, 94, 111, 0.15)',
+                        'float': '0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01)',
                     }
                 },
             },
@@ -55,6 +60,19 @@
         }
         .dark ::-webkit-scrollbar-thumb {
             background: #4b5563;
+        }
+        
+        /* Utility classes for editor */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .editor-textarea {
+             min-height: 60vh;
         }
     </style>
 <script type="importmap">
