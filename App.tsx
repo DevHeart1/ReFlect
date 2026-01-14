@@ -5,6 +5,7 @@ import { RecentEntries } from './components/RecentEntries';
 import { JournalModal } from './components/JournalModal';
 import { TemplatesView } from './components/TemplatesView';
 import { TemplateBuilder } from './components/TemplateBuilder';
+import { PrivacySettings } from './components/PrivacySettings';
 import { JournalEntry, ViewState } from './types';
 
 // Initial Mock Data
@@ -68,6 +69,9 @@ const App: React.FC = () => {
           }}
         />
       );
+    }
+    if (currentView === ViewState.SETTINGS) {
+      return <PrivacySettings />;
     }
 
     // Default Dashboard View
@@ -206,7 +210,11 @@ const App: React.FC = () => {
       />
 
       {/* Main Content */}
-      <main className={`flex-1 flex flex-col h-full relative z-10 w-full ${currentView === ViewState.TEMPLATE_BUILDER ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+      <main className={`flex-1 flex flex-col h-full relative z-10 w-full ${
+        currentView === ViewState.TEMPLATE_BUILDER || currentView === ViewState.SETTINGS 
+          ? 'overflow-hidden' 
+          : 'overflow-y-auto'
+      }`}>
         {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between p-4 bg-card-light dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-30">
           <div className="flex items-center gap-2">
