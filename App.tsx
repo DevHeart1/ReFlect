@@ -11,6 +11,7 @@ import { JournalEditor } from './components/JournalEditor';
 import { PersonalInsights } from './components/PersonalInsights';
 import { DailyMoodTracker } from './components/DailyMoodTracker';
 import { SignIn } from './components/SignIn';
+import { OnboardingFlow } from './components/Onboarding';
 import { JournalEntry, ViewState } from './types';
 
 // Initial Mock Data
@@ -62,7 +63,28 @@ const App: React.FC = () => {
     setCurrentView(ViewState.DASHBOARD);
   };
 
+  const handleSignIn = () => {
+    // Existing user flow -> Dashboard
+    setIsAuthenticated(true);
+    setCurrentView(ViewState.DASHBOARD);
+  };
+
+  const handleSignUp = () => {
+    // New user flow -> Onboarding
+    setIsAuthenticated(true);
+    setCurrentView(ViewState.ONBOARDING);
+  };
+
+  const handleOnboardingComplete = () => {
+    setCurrentView(ViewState.DASHBOARD);
+  };
+
   const renderContent = () => {
+    if (currentView === ViewState.ONBOARDING) {
+        return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+    }
+
+    // Main App Views
     if (currentView === ViewState.TEMPLATES) {
       return <TemplatesView onCreateCustom={() => setCurrentView(ViewState.TEMPLATE_BUILDER)} />;
     }
@@ -226,7 +248,12 @@ const App: React.FC = () => {
 
   // Auth Guard
   if (!isAuthenticated) {
-    return <SignIn onSignIn={() => setIsAuthenticated(true)} />;
+    return <SignIn onSignIn={handleSignIn} onSignUp={handleSignUp} />;
+  }
+
+  // If Onboarding, show without Sidebar
+  if (currentView === ViewState.ONBOARDING) {
+      return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
   return (

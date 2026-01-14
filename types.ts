@@ -23,7 +23,8 @@ export enum ViewState {
   TEMPLATES = 'TEMPLATES',
   TEMPLATE_BUILDER = 'TEMPLATE_BUILDER',
   YEAR_REPORT = 'YEAR_REPORT',
-  EDITOR = 'EDITOR'
+  EDITOR = 'EDITOR',
+  ONBOARDING = 'ONBOARDING'
 }
 
 export interface TemplateBlock {
