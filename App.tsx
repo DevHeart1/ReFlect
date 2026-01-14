@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { MoodChart } from './components/MoodChart';
 import { RecentEntries } from './components/RecentEntries';
@@ -46,6 +46,18 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [entries, setEntries] = useState<JournalEntry[]>(INITIAL_ENTRIES);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Handle Dark Mode
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
+  const toggleTheme = () => setIsDarkMode(!isDarkMode);
 
   const handleSaveEntry = (title: string, content: string) => {
     const newEntry: JournalEntry = {
@@ -123,14 +135,11 @@ const App: React.FC = () => {
     // Default Dashboard View
     return (
       <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
-        {/* 1. Header & Quote Section */}
+        {/* 1. Header Section (Greeting) */}
         <section className="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-fade-in-up">
-          <div className="flex flex-col gap-2 max-w-2xl">
+          <div className="flex flex-col gap-1 max-w-2xl">
             <h2 className="text-4xl font-black tracking-tight text-[#131516] dark:text-white leading-tight">Good Morning, Alex</h2>
-            <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400 italic">
-              <span className="material-symbols-outlined text-primary text-[20px]">format_quote</span>
-              <p className="text-lg font-medium">"The unexamined life is not worth living." <span className="text-sm not-italic opacity-70 ml-2">— Socrates</span></p>
-            </div>
+            <p className="text-gray-500 dark:text-gray-400 font-medium">Here's your daily overview.</p>
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-white/5 px-4 py-2 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
@@ -142,7 +151,58 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* 2. Dashboard Grid */}
+        {/* 2. Daily Quote Section (Dedicated) */}
+        <section className="bg-gradient-to-r from-primary/5 to-transparent border-l-4 border-primary p-6 rounded-r-xl animate-fade-in-up delay-75 shadow-sm">
+            <div className="flex items-start gap-4">
+                <span className="material-symbols-outlined text-primary text-3xl mt-1">format_quote</span>
+                <div>
+                    <p className="text-xl font-serif text-gray-800 dark:text-gray-200 italic leading-relaxed">"The unexamined life is not worth living."</p>
+                    <p className="text-sm font-bold text-gray-500 mt-2 tracking-wide uppercase">— Socrates</p>
+                </div>
+            </div>
+        </section>
+
+        {/* 3. Quick Links Section (New) */}
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in-up delay-100">
+            <button 
+                onClick={() => setCurrentView(ViewState.EDITOR)} 
+                className="flex flex-col items-center justify-center p-6 bg-card-light dark:bg-card-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-800 hover:border-primary/50 hover:shadow-md hover:-translate-y-1 transition-all group"
+            >
+                <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-3 group-hover:bg-primary group-hover:text-white transition-all">
+                    <span className="material-symbols-outlined text-2xl">edit_note</span>
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">New Entry</span>
+            </button>
+            <button 
+                onClick={() => setCurrentView(ViewState.JOURNAL)} 
+                className="flex flex-col items-center justify-center p-6 bg-card-light dark:bg-card-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-800 hover:border-primary/50 hover:shadow-md hover:-translate-y-1 transition-all group"
+            >
+                <div className="w-12 h-12 rounded-xl bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 flex items-center justify-center mb-3 group-hover:bg-orange-500 group-hover:text-white transition-all">
+                    <span className="material-symbols-outlined text-2xl">sentiment_satisfied</span>
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">Mood Tracker</span>
+            </button>
+            <button 
+                onClick={() => setCurrentView(ViewState.INSIGHTS)} 
+                className="flex flex-col items-center justify-center p-6 bg-card-light dark:bg-card-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-800 hover:border-primary/50 hover:shadow-md hover:-translate-y-1 transition-all group"
+            >
+                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-3 group-hover:bg-purple-500 group-hover:text-white transition-all">
+                    <span className="material-symbols-outlined text-2xl">insights</span>
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">Insights</span>
+            </button>
+            <button 
+                onClick={() => setCurrentView(ViewState.TEMPLATES)} 
+                className="flex flex-col items-center justify-center p-6 bg-card-light dark:bg-card-dark rounded-2xl shadow-soft border border-gray-100 dark:border-gray-800 hover:border-primary/50 hover:shadow-md hover:-translate-y-1 transition-all group"
+            >
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center mb-3 group-hover:bg-blue-500 group-hover:text-white transition-all">
+                    <span className="material-symbols-outlined text-2xl">grid_view</span>
+                </div>
+                <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">Templates</span>
+            </button>
+        </section>
+
+        {/* 4. Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
           {/* Main Action Card (8 cols) */}
@@ -263,6 +323,8 @@ const App: React.FC = () => {
         setView={setCurrentView} 
         isOpen={isMobileMenuOpen}
         closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
       />
 
       {/* Main Content */}

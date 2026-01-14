@@ -6,9 +6,11 @@ interface SidebarProps {
   setView: (view: ViewState) => void;
   isOpen: boolean;
   closeMobileMenu: () => void;
+  isDarkMode: boolean;
+  toggleTheme: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, closeMobileMenu }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, closeMobileMenu, isDarkMode, toggleTheme }) => {
   const navItems = [
     { id: ViewState.DASHBOARD, label: 'Journal', icon: 'book' },
     { id: ViewState.INSIGHTS, label: 'Insights', icon: 'bar_chart' },
@@ -68,8 +70,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, 
           })}
         </nav>
 
+        {/* Theme Toggle */}
+        <div className="py-2 mt-4 border-t border-gray-100 dark:border-gray-800">
+             <button 
+                onClick={toggleTheme}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+            >
+                <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
+                <span className="flex-1 text-left font-medium text-sm">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                
+                {/* Switch UI */}
+                <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}>
+                    <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform duration-300 ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`}></div>
+                </div>
+            </button>
+        </div>
+
         {/* User Profile */}
-        <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+        <div className="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
           <div 
             className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm" 
             style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg')" }}
