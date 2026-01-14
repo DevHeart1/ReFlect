@@ -2,9 +2,10 @@ import React from 'react';
 
 interface SignInProps {
   onSignIn: () => void;
+  onSignUp: () => void;
 }
 
-export const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
+export const SignIn: React.FC<SignInProps> = ({ onSignIn, onSignUp }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSignIn();
@@ -127,7 +128,7 @@ export const SignIn: React.FC<SignInProps> = ({ onSignIn }) => {
           </form>
 
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            New to Re-Flect? <a href="#" className="font-bold text-primary hover:text-primary/80 transition-colors">Create an account</a>
+            New to Re-Flect? <button onClick={onSignUp} className="font-bold text-primary hover:text-primary/80 transition-colors">Create an account</button>
           </p>
 
           <div className="pt-8 text-center">
