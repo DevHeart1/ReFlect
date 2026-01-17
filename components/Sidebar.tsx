@@ -1,22 +1,20 @@
 import React from 'react';
-import { ViewState } from '../types';
+import { NavLink, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
-  currentView: ViewState;
-  setView: (view: ViewState) => void;
   isOpen: boolean;
   closeMobileMenu: () => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, closeMobileMenu, isDarkMode, toggleTheme }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu, isDarkMode, toggleTheme }) => {
   const navItems = [
-    { id: ViewState.DASHBOARD, label: 'Journal', icon: 'book' },
-    { id: ViewState.INSIGHTS, label: 'Insights', icon: 'bar_chart' },
-    { id: ViewState.YEAR_REPORT, label: 'Year Report', icon: 'auto_awesome' },
-    { id: ViewState.JOURNAL, label: 'Mood Tracker', icon: 'sentiment_satisfied' }, 
-    { id: ViewState.SETTINGS, label: 'Settings', icon: 'settings' },
+    { path: '/', label: 'Journal', icon: 'book', exact: true },
+    { path: '/insights', label: 'Insights', icon: 'bar_chart' },
+    { path: '/year-report', label: 'Year Report', icon: 'auto_awesome' },
+    { path: '/mood-tracker', label: 'Mood Tracker', icon: 'sentiment_satisfied' },
+    { path: '/settings', label: 'Settings', icon: 'settings' },
   ];
 
   const sidebarClasses = `
@@ -28,7 +26,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, 
     <>
       {/* Overlay for mobile */}
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 z-30 lg:hidden backdrop-blur-sm"
           onClick={closeMobileMenu}
         />
@@ -48,48 +46,46 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, setView, isOpen, 
 
         {/* Navigation */}
         <nav className="flex-1 flex flex-col gap-2">
-          {navItems.map((item) => {
-            const isActive = currentView === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  setView(item.id);
-                  closeMobileMenu();
-                }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium w-full text-left
-                  ${isActive 
-                    ? 'bg-[#f1f5f9] text-[#2a5e6f] dark:bg-[#2a5e6f] dark:text-white' 
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
-                  }`}
-              >
-                <span className="material-symbols-outlined">{item.icon}</span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
+          {navItems.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.exact}
+              onClick={closeMobileMenu}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium w-full text-left
+                ${isActive
+                  ? 'bg-[#f1f5f9] text-[#2a5e6f] dark:bg-[#2a5e6f] dark:text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                }`
+              }
+            >
+              <span className="material-symbols-outlined">{item.icon}</span>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
         </nav>
 
         {/* Theme Toggle */}
         <div className="py-2 mt-4 border-t border-gray-100 dark:border-gray-800">
-             <button 
-                onClick={toggleTheme}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-            >
-                <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
-                <span className="flex-1 text-left font-medium text-sm">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-                
-                {/* Switch UI */}
-                <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}>
-                    <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform duration-300 ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`}></div>
-                </div>
-            </button>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+          >
+            <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
+            <span className="flex-1 text-left font-medium text-sm">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+
+            {/* Switch UI */}
+            <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}>
+              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform duration-300 ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`}></div>
+            </div>
+          </button>
         </div>
 
         {/* User Profile */}
         <div className="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-          <div 
-            className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm" 
+          <div
+            className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm"
             style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg')" }}
           />
           <div className="flex flex-col">
