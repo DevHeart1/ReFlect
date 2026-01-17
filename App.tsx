@@ -13,7 +13,10 @@ import {
   TemplateBuilderPage,
   EditorPage,
   SettingsPage,
-  YearReportPage
+  YearReportPage,
+  EntryDetailPage,
+  AllEntriesPage,
+  NotificationsPage
 } from './pages';
 
 // Initial Mock Data
@@ -74,6 +77,18 @@ const App: React.FC = () => {
       colorClass: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
     };
     setEntries([newEntry, ...entries]);
+  };
+
+  const handleDeleteEntry = (id: string) => {
+    setEntries(entries.filter(entry => entry.id !== id));
+  };
+
+  const handleEditEntry = (id: string, title: string, content: string) => {
+    setEntries(entries.map(entry =>
+      entry.id === id
+        ? { ...entry, title, excerpt: content }
+        : entry
+    ));
   };
 
   const handleSignIn = () => {
@@ -139,6 +154,9 @@ const App: React.FC = () => {
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/year-report" element={<YearReportPage />} />
+              <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
+              <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
 
               {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />

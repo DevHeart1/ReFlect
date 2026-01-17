@@ -23,7 +23,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-white/5 px-4 py-2 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
                         Today: <span className="text-primary dark:text-primary-light font-bold">Oct 24</span>
                     </span>
-                    <button className="p-2 bg-white dark:bg-white/5 rounded-full text-gray-500 hover:text-primary transition-colors shadow-sm border border-gray-100 dark:border-gray-700">
+                    <button
+                        onClick={() => navigate('/notifications')}
+                        className="p-2 bg-white dark:bg-white/5 rounded-full text-gray-500 hover:text-primary transition-colors shadow-sm border border-gray-100 dark:border-gray-700"
+                    >
                         <span className="material-symbols-outlined text-[20px]">notifications</span>
                     </button>
                 </div>
@@ -127,15 +130,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
 
                     {/* AI Chips */}
                     <div className="flex flex-wrap gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group">
+                        <button
+                            onClick={() => navigate('/editor?prompt=feeling')}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
+                        >
                             <span className="material-symbols-outlined text-purple-400 group-hover:text-purple-500 text-[20px]">spark</span>
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">How are you feeling right now?</span>
                         </button>
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group">
+                        <button
+                            onClick={() => navigate('/editor?prompt=dream')}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
+                        >
                             <span className="material-symbols-outlined text-blue-400 group-hover:text-blue-500 text-[20px]">bedtime</span>
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Record last night's dream</span>
                         </button>
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group">
+                        <button
+                            onClick={() => navigate('/editor?prompt=gratitude')}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
+                        >
                             <span className="material-symbols-outlined text-pink-400 group-hover:text-pink-500 text-[20px]">favorite</span>
                             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">List 3 things you're grateful for</span>
                         </button>
@@ -144,7 +156,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
 
                 {/* Mood Widget (4 cols) */}
                 <div className="lg:col-span-4 flex flex-col h-full">
-                    <div className="bg-card-light dark:bg-card-dark p-6 rounded-xl shadow-soft dark:shadow-none dark:border dark:border-gray-700 h-full flex flex-col">
+                    <button
+                        onClick={() => navigate('/mood-tracker')}
+                        className="bg-card-light dark:bg-card-dark p-6 rounded-xl shadow-soft dark:shadow-none dark:border dark:border-gray-700 h-full flex flex-col hover:shadow-md hover:border-primary/30 transition-all cursor-pointer text-left"
+                    >
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <h3 className="text-base font-semibold text-gray-900 dark:text-white">Weekly Flow</h3>
@@ -174,12 +189,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                                 <span>Sun</span>
                             </div>
                         </div>
-                    </div>
+                    </button>
                 </div>
-
-                {/* Recent Entries Section */}
-                <RecentEntries entries={entries} onNewEntry={() => navigate('/editor')} />
             </div>
+
+            {/* Recent Entries Section */}
+            <RecentEntries entries={entries} onNewEntry={() => navigate('/editor')} />
         </div>
     );
 };

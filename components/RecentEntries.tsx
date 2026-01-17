@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { JournalEntry } from '../types';
 
 interface RecentEntriesProps {
@@ -7,15 +8,26 @@ interface RecentEntriesProps {
 }
 
 export const RecentEntries: React.FC<RecentEntriesProps> = ({ entries, onNewEntry }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="lg:col-span-12">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recent Entries</h3>
-        <button className="text-sm font-medium text-primary hover:text-primary/80 transition-colors">View all</button>
+        <button
+          onClick={() => navigate('/entries')}
+          className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+        >
+          View all
+        </button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {entries.map((entry) => (
-          <div key={entry.id} className="bg-card-light dark:bg-card-dark p-5 rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow cursor-pointer group">
+          <div
+            key={entry.id}
+            onClick={() => navigate(`/entry/${entry.id}`)}
+            className="bg-card-light dark:bg-card-dark p-5 rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
+          >
             <div className="flex justify-between items-start mb-3">
               <div className={`${entry.colorClass} p-2 rounded-lg transition-transform group-hover:scale-105`}>
                 <span className="material-symbols-outlined text-[20px]">{entry.icon}</span>
@@ -40,7 +52,7 @@ export const RecentEntries: React.FC<RecentEntriesProps> = ({ entries, onNewEntr
         ))}
 
         {/* Add New Placeholder */}
-        <button 
+        <button
           onClick={onNewEntry}
           className="bg-white dark:bg-card-dark p-5 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center group cursor-pointer hover:border-primary hover:bg-primary/5 dark:hover:bg-white/5 transition-all min-h-[200px]"
         >

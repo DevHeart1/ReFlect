@@ -6,3 +6,7 @@ export { TemplateBuilderPage } from './TemplateBuilderPage';
 export { EditorPage } from './EditorPage';
 export { SettingsPage } from './SettingsPage';
 export { YearReportPage } from './YearReportPage';
+export { EntryDetailPage } from './EntryDetailPage';
+export { AllEntriesPage } from './AllEntriesPage';
+export { NotificationsPage } from './NotificationsPage';
+
