@@ -17,7 +17,8 @@ import {
   EntryDetailPage,
   AllEntriesPage,
   NotificationsPage,
-  GeneralSettingsPage
+  GeneralSettingsPage,
+  ProfileSettingsPage
 } from './pages';
 
 // Initial Mock Data
@@ -155,6 +156,7 @@ const App: React.FC = () => {
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/general" element={<GeneralSettingsPage />} />
+              <Route path="/settings/profile" element={<ProfileSettingsPage />} />
               <Route path="/year-report" element={<YearReportPage />} />
               <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
               <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
