@@ -72,7 +72,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     const toggleMediaMenu = () => setShowMediaMenu(!showMediaMenu);
 
     return (
-        <div className={`p-2 bg-white dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-20 transition-all duration-300 flex flex-wrap items-center gap-1`}>
+        <div className={`p-2 bg-white dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-20 transition-all duration-300 flex flex-nowrap items-center gap-1 overflow-x-auto no-scrollbar`}>
 
             {/* Collapse Toggle */}
             <button
@@ -86,7 +86,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             {!isCollapsed && (
                 <>
                     {/* Font Family */}
-                    <div className="relative">
+                    <div className="relative shrink-0">
                         <button
                             onClick={() => setShowFontMenu(!showFontMenu)}
                             className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -112,7 +112,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     </div>
 
                     {/* Font Size */}
-                    <div className="relative">
+                    <div className="relative shrink-0">
                         <button
                             onClick={() => setShowFontSizeMenu(!showFontSizeMenu)}
                             className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ml-1"
@@ -146,7 +146,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         )}
                     </div>
 
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
 
                     {/* Alignments */}
                     <ToolbarButton
@@ -154,21 +154,24 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         isActive={editor.isActive({ textAlign: 'left' })}
                         icon="format_align_left"
                         tooltip="Align Left"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().setTextAlign('center').run()}
                         isActive={editor.isActive({ textAlign: 'center' })}
                         icon="format_align_center"
                         tooltip="Align Center"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().setTextAlign('right').run()}
                         isActive={editor.isActive({ textAlign: 'right' })}
                         icon="format_align_right"
                         tooltip="Align Right"
+                        className="shrink-0"
                     />
 
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
 
                     {/* Basic Style */}
                     <ToolbarButton
@@ -176,21 +179,24 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         isActive={editor.isActive('bold')}
                         icon="format_bold"
                         tooltip="Bold"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().toggleItalic().run()}
                         isActive={editor.isActive('italic')}
                         icon="format_italic"
                         tooltip="Italic"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().toggleUnderline().run()}
                         isActive={editor.isActive('underline')}
                         icon="format_underlined"
                         tooltip="Underline"
+                        className="shrink-0"
                     />
 
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
 
                     {/* Headings */}
                     <ToolbarButton
@@ -198,21 +204,24 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         isActive={editor.isActive('heading', { level: 1 })}
                         icon="title"
                         tooltip="Heading 1"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                         isActive={editor.isActive('heading', { level: 2 })}
                         icon="format_h2"
                         tooltip="Heading 2"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
                         isActive={editor.isActive('heading', { level: 3 })}
                         icon="format_h3"
                         tooltip="Heading 3"
+                        className="shrink-0"
                     />
 
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
 
                     {/* Lists */}
                     <ToolbarButton
@@ -220,18 +229,20 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         isActive={editor.isActive('bulletList')}
                         icon="format_list_bulleted"
                         tooltip="Bullet List"
+                        className="shrink-0"
                     />
                     <ToolbarButton
                         onClick={() => editor.chain().focus().toggleOrderedList().run()}
                         isActive={editor.isActive('orderedList')}
                         icon="format_list_numbered"
                         tooltip="Ordered List"
+                        className="shrink-0"
                     />
 
-                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+                    <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1 shrink-0"></div>
 
                     {/* Media Menu */}
-                    <div className="relative">
+                    <div className="relative shrink-0">
                         <ToolbarButton
                             onClick={toggleMediaMenu}
                             icon="add_photo_alternate"
@@ -268,7 +279,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                     </div>
 
                     {/* Emoji */}
-                    <div className="relative">
+                    <div className="relative shrink-0">
                         <ToolbarButton
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             icon="sentiment_satisfied"
@@ -293,12 +304,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                         )}
                     </div>
 
-                    <div className="flex-1"></div>
+                    <div className="flex-1 min-w-4"></div>
 
                     {/* Voice */}
                     <button
                         onClick={onVoiceRecord}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all ${isRecording
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all shrink-0 whitespace-nowrap ${isRecording
                             ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30'
                             : 'bg-primary/5 text-primary hover:bg-primary/10'
                             }`}
