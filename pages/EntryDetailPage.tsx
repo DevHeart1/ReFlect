@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JournalEntry } from '../types';
+import { RichTextEditor } from '../components/editor/RichTextEditor';
 
 interface EntryDetailPageProps {
     entries: JournalEntry[];
@@ -14,13 +15,14 @@ export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDel
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState('');
     const [editedContent, setEditedContent] = useState('');
+    const editorRef = useRef<any>(null);
 
     const entry = entries.find(e => e.id === id);
 
     React.useEffect(() => {
         if (entry) {
             setEditedTitle(entry.title);
-            setEditedContent(entry.excerpt);
+            setEditedContent(entry.excerpt); // Note: using excerpt as full content for now
         }
     }, [entry]);
 
@@ -139,18 +141,18 @@ export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDel
                 {/* Content */}
                 <div className="p-6">
                     {isEditing ? (
-                        <textarea
-                            value={editedContent}
-                            onChange={(e) => setEditedContent(e.target.value)}
-                            className="w-full min-h-[400px] text-gray-700 dark:text-gray-300 bg-transparent border border-gray-300 dark:border-gray-600 rounded-lg p-4 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-y"
-                            placeholder="Write your thoughts..."
-                        />
-                    ) : (
-                        <div className="prose dark:prose-invert max-w-none">
-                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                {entry.excerpt}
-                            </p>
+                        <div className="min-h-[400px]">
+                            <RichTextEditor
+                                content={editedContent}
+                                onUpdate={setEditedContent}
+                                onEditorReady={(editor) => editorRef.current = editor}
+                            />
                         </div>
+                    ) : (
+                        <div
+                            className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: entry.excerpt }}
+                        />
                     )}
                 </div>
 

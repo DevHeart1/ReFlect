@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { generateMindfulnessPrompt } from '../services/geminiService';
+import { RichTextEditor } from './editor/RichTextEditor';
 
 interface JournalEditorProps {
   onBack: () => void;
@@ -18,19 +19,21 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
     'How does your body feel in this moment?'
   ]);
 
+  const editorRef = useRef<any>(null);
+
   // Handle URL Prompts
   useEffect(() => {
     const promptType = searchParams.get('prompt');
     if (promptType) {
       if (promptType === 'feeling') {
         setTitle('Morning Check-in');
-        setContent("Right now, I'm feeling...");
+        setContent("<p>Right now, I'm feeling...</p>");
       } else if (promptType === 'dream') {
         setTitle('Dream Journal');
-        setContent("Last night I dreamt about...");
+        setContent("<p>Last night I dreamt about...</p>");
       } else if (promptType === 'gratitude') {
         setTitle('Daily Gratitude');
-        setContent("Today I am grateful for:\n1. \n2. \n3. ");
+        setContent("<h2>Today I am grateful for:</h2><ol><li><p></p></li><li><p></p></li><li><p></p></li></ol>");
       }
     } else {
       // Default Title based on time of day
@@ -60,14 +63,20 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   };
 
   const insertText = (text: string) => {
-    setContent(prev => prev + (prev ? '\n\n' : '') + text);
+    if (editorRef.current) {
+      editorRef.current.chain().focus().insertContent(text).run();
+    }
   };
 
   const handlePromptClick = (prompt: string) => {
-    insertText(`**Reflection:** ${prompt}\n`);
+    insertText(`<p><strong>Reflection:</strong> ${prompt}</p>`);
   };
 
-  const getWordCount = () => content.split(/\s+/).filter(Boolean).length;
+  // Simple word count estimation from HTML
+  const getWordCount = () => {
+    const text = content.replace(/<[^>]*>/g, ' '); // Strip tags
+    return text.split(/\s+/).filter(Boolean).length;
+  };
 
   return (
     <div className="flex h-full w-full bg-background-light dark:bg-background-dark text-[#131516] dark:text-gray-100 font-display animate-fade-in-up">
@@ -130,18 +139,13 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
               </div>
             </div>
 
-            {/* Editor Text Area */}
+            {/* Editor Text Area Replacement */}
             <div className="w-full relative group">
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full bg-transparent border-none p-0 text-xl md:text-2xl leading-relaxed text-gray-700 dark:text-gray-200 font-serif placeholder:text-gray-300 dark:placeholder:text-gray-600 focus:ring-0 resize-none outline-none editor-textarea selection:bg-primary/20 min-h-[60vh]"
-                placeholder="Start writing... clear your mind."
+              <RichTextEditor
+                content={content}
+                onUpdate={setContent}
+                onEditorReady={(editor) => editorRef.current = editor}
               />
-              {/* Floating Type Indicator */}
-              <div className="absolute -left-8 top-2 opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 text-gray-300 hidden lg:block">
-                <span className="material-symbols-outlined text-xl">edit</span>
-              </div>
             </div>
           </div>
         </div>
@@ -152,7 +156,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
             <div className="flex items-center justify-between bg-card-light/80 dark:bg-card-dark/80 backdrop-blur-md border border-white/20 dark:border-white/5 rounded-2xl shadow-float p-2 pointer-events-auto ring-1 ring-black/5">
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => insertText("I am grateful for: ")}
+                  onClick={() => insertText("<p>I am grateful for: </p>")}
                   className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all text-gray-500 hover:text-primary group"
                 >
                   <span className="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform">favorite</span>
@@ -160,7 +164,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                 </button>
                 <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
                 <button
-                  onClick={() => insertText("Reviewing this moment mindfully: ")}
+                  onClick={() => insertText("<p>Reviewing this moment mindfully: </p>")}
                   className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all text-gray-500 hover:text-primary group"
                 >
                   <span className="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform">self_improvement</span>
@@ -168,7 +172,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                 </button>
                 <div className="w-px h-8 bg-gray-200 dark:bg-gray-700 mx-1"></div>
                 <button
-                  onClick={() => insertText("My goal for today/tomorrow is: ")}
+                  onClick={() => insertText("<p>My goal for today/tomorrow is: </p>")}
                   className="flex flex-col items-center justify-center w-16 h-14 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-all text-gray-500 hover:text-primary group"
                 >
                   <span className="material-symbols-outlined mb-1 group-hover:scale-110 transition-transform">flag</span>
@@ -176,7 +180,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                 </button>
               </div>
               <button
-                onClick={() => insertText(`\n[${new Date().toLocaleTimeString()}] `)}
+                onClick={() => insertText(`<p><strong>[${new Date().toLocaleTimeString()}]</strong> </p>`)}
                 className="flex items-center justify-center size-10 rounded-full bg-primary text-white shadow-lg hover:scale-105 transition-transform"
                 title="Add Timestamp"
               >
