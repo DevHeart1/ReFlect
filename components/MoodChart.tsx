@@ -14,30 +14,32 @@ const data: MoodData[] = [
 
 export const MoodChart: React.FC = () => {
   return (
-    <div className="h-full w-full">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="h-full w-full min-h-[160px]">
+      <ResponsiveContainer width="100%" height="100%" minHeight={100}>
         <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#CCAB48" stopOpacity={0.3}/>
-              <stop offset="95%" stopColor="#CCAB48" stopOpacity={0}/>
+              <stop offset="5%" stopColor="#CCAB48" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#CCAB48" stopOpacity={0} />
             </linearGradient>
           </defs>
-          <XAxis 
-            dataKey="day" 
-            axisLine={false} 
-            tickLine={false} 
+          <XAxis
+            dataKey="day"
+            axisLine={false}
+            tickLine={false}
             tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 500 }}
             dy={10}
+            interval="preserveStartEnd"
           />
-           <YAxis hide domain={[0, 100]} />
-          <Area 
-            type="monotone" 
-            dataKey="value" 
-            stroke="#CCAB48" 
+          <YAxis hide domain={[0, 100]} />
+          <Area
+            type="monotone"
+            dataKey="value"
+            stroke="#CCAB48"
             strokeWidth={3}
-            fillOpacity={1} 
-            fill="url(#colorValue)" 
+            fillOpacity={1}
+            fill="url(#colorValue)"
+            isAnimationActive={false}
           />
         </AreaChart>
       </ResponsiveContainer>
