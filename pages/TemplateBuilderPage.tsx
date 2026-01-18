@@ -1,15 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TemplateBuilder } from '../components/TemplateBuilder';
+import { Template } from '../types';
 
-export const TemplateBuilderPage: React.FC = () => {
+interface TemplateBuilderPageProps {
+    onSaveNewTemplate: (template: Template) => void;
+}
+
+export const TemplateBuilderPage: React.FC<TemplateBuilderPageProps> = ({ onSaveNewTemplate }) => {
     const navigate = useNavigate();
 
     return (
         <TemplateBuilder
             onBack={() => navigate('/templates')}
-            onSave={() => {
-                alert("Template Saved!");
+            onSave={(template) => {
+                onSaveNewTemplate(template);
                 navigate('/templates');
             }}
         />

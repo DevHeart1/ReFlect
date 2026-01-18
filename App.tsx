@@ -49,12 +49,116 @@ const INITIAL_ENTRIES: JournalEntry[] = [
   }
 ];
 
+// Initial Templates Data
+import { Template } from './types';
+const INITIAL_TEMPLATES: Template[] = [
+  {
+    id: 'gratitude',
+    title: 'Gratitude Journal',
+    description: 'Cultivate positivity by listing three things you are thankful for today. A simple practice for a happier mind.',
+    category: 'Mindfulness',
+    icon: 'favorite',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-pink-500',
+      iconBg: 'bg-pink-50 dark:bg-pink-500/10',
+      groupHoverText: 'group-hover:text-pink-500',
+      gradient: 'from-pink-500/5',
+    }
+  },
+  {
+    id: 'morning',
+    title: 'Morning Intentions',
+    description: 'Start your day with purpose. Set clear goals and a positive mindset for the hours ahead.',
+    category: 'Productivity',
+    icon: 'wb_sunny',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-amber-500',
+      iconBg: 'bg-amber-50 dark:bg-amber-500/10',
+      groupHoverText: 'group-hover:text-amber-500',
+      gradient: 'from-amber-500/5',
+    }
+  },
+  {
+    id: 'reflection',
+    title: 'Deep Reflection',
+    description: 'Analyze complex emotions and situations with guided prompts to gain deeper personal insight.',
+    category: 'Emotional Growth',
+    icon: 'psychology',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-indigo-500',
+      iconBg: 'bg-indigo-50 dark:bg-indigo-500/10',
+      groupHoverText: 'group-hover:text-indigo-500',
+      gradient: 'from-indigo-500/5',
+    }
+  },
+  {
+    id: 'goals',
+    title: 'Goal Setting',
+    description: 'Define what you want to achieve. Break down big dreams into actionable steps using the SMART framework.',
+    category: 'Productivity',
+    icon: 'flag',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-emerald-500',
+      iconBg: 'bg-emerald-50 dark:bg-emerald-500/10',
+      groupHoverText: 'group-hover:text-emerald-500',
+      gradient: 'from-emerald-500/5',
+    }
+  },
+  {
+    id: 'anxiety',
+    title: 'Anxiety Relief',
+    description: 'A safe space to unload worries. Use the 5-4-3-2-1 technique to ground yourself in the present moment.',
+    category: 'Emotional Growth',
+    icon: 'spa',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-cyan-500',
+      iconBg: 'bg-cyan-50 dark:bg-cyan-500/10',
+      groupHoverText: 'group-hover:text-cyan-500',
+      gradient: 'from-cyan-500/5',
+    }
+  },
+  {
+    id: 'retro',
+    title: 'Daily Retrospective',
+    description: 'Review your day before sleep. What went well? What could be improved? Clear your mind for rest.',
+    category: 'Mindfulness',
+    icon: 'history',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-violet-500',
+      iconBg: 'bg-violet-50 dark:bg-violet-500/10',
+      groupHoverText: 'group-hover:text-violet-500',
+      gradient: 'from-violet-500/5',
+    }
+  },
+  {
+    id: 'free',
+    title: 'Free Write',
+    description: 'No prompts, no structure. Just you and the blank page. Let your thoughts flow freely.',
+    category: 'General',
+    icon: 'edit_note',
+    colorTheme: {
+      bg: 'bg-card-light dark:bg-card-dark',
+      text: 'text-slate-500 dark:text-slate-300',
+      iconBg: 'bg-slate-100 dark:bg-slate-700/50',
+      groupHoverText: 'group-hover:text-slate-500 dark:group-hover:text-slate-300',
+      gradient: 'from-slate-500/5',
+    }
+  }
+];
+
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [entries, setEntries] = useState<JournalEntry[]>(INITIAL_ENTRIES);
+  const [templates, setTemplates] = useState<Template[]>(INITIAL_TEMPLATES);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   // Handle Dark Mode
@@ -93,6 +197,10 @@ const App: React.FC = () => {
         ? { ...entry, title, excerpt: content }
         : entry
     ));
+  };
+
+  const handleAddTemplate = (newTemplate: Template) => {
+    setTemplates([...templates, newTemplate]);
   };
 
   const handleSignIn = () => {
@@ -153,8 +261,9 @@ const App: React.FC = () => {
               <Route path="/" element={<Dashboard entries={entries} />} />
               <Route path="/mood-tracker" element={<MoodTrackerPage />} />
               <Route path="/insights" element={<InsightsPage />} />
-              <Route path="/templates" element={<TemplatesPage />} />
-              <Route path="/templates/builder" element={<TemplateBuilderPage />} />
+              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
+              <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/settings/general" element={<GeneralSettingsPage />} />

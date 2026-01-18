@@ -1,19 +1,30 @@
 import React, { useState } from 'react';
-import { TemplateBlock } from '../types';
+import { Template, TemplateBlock } from '../types';
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 
 interface TemplateBuilderProps {
   onBack: () => void;
-  onSave: () => void;
+  onSave: (template: Template) => void;
 }
 
 export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave }) => {
-  const [templateName, setTemplateName] = useState('New Morning Routine');
-  const [category, setCategory] = useState('Mindfulness');
+  const [templateName, setTemplateName] = useState('New Template');
+  const [category, setCategory] = useState('General');
   const [blocks, setBlocks] = useState<TemplateBlock[]>([
-    { id: '1', type: 'mood', title: 'How are you feeling this morning?' },
-    { id: '2', type: 'question', title: 'What is one intention you have for today?' },
-    { id: '3', type: 'checklist', title: 'Key Habits', items: ['Drink water', 'Stretch'] },
+    { id: '1', type: 'mood', title: 'How are you feeling?' },
+    { id: '2', type: 'question', title: 'What is your main focus today?' },
   ]);
+  const [selectedColor, setSelectedColor] = useState('text-blue-500');
+  const [selectedIcon, setSelectedIcon] = useState('edit_note');
+  const [showIconPicker, setShowIconPicker] = useState(false);
+
+  const colors = [
+    { name: 'Blue', class: 'text-blue-500', bg: 'bg-blue-500', theme: { text: 'text-blue-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-blue-50 dark:bg-blue-500/10', groupHoverText: 'group-hover:text-blue-500', gradient: 'from-blue-500/5' } },
+    { name: 'Amber', class: 'text-amber-500', bg: 'bg-amber-500', theme: { text: 'text-amber-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-amber-50 dark:bg-amber-500/10', groupHoverText: 'group-hover:text-amber-500', gradient: 'from-amber-500/5' } },
+    { name: 'Pink', class: 'text-pink-500', bg: 'bg-pink-500', theme: { text: 'text-pink-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-pink-50 dark:bg-pink-500/10', groupHoverText: 'group-hover:text-pink-500', gradient: 'from-pink-500/5' } },
+    { name: 'Indigo', class: 'text-indigo-500', bg: 'bg-indigo-500', theme: { text: 'text-indigo-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10', groupHoverText: 'group-hover:text-indigo-500', gradient: 'from-indigo-500/5' } },
+    { name: 'Emerald', class: 'text-emerald-500', bg: 'bg-emerald-500', theme: { text: 'text-emerald-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10', groupHoverText: 'group-hover:text-emerald-500', gradient: 'from-emerald-500/5' } },
+  ];
 
   const addBlock = (type: TemplateBlock['type']) => {
     const newBlock: TemplateBlock = {
@@ -33,6 +44,74 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
     setBlocks(blocks.map(b => b.id === id ? { ...b, title } : b));
   };
 
+  const moveBlock = (index: number, direction: 'up' | 'down') => {
+    if (direction === 'up' && index > 0) {
+      const newBlocks = [...blocks];
+      [newBlocks[index - 1], newBlocks[index]] = [newBlocks[index], newBlocks[index - 1]];
+      setBlocks(newBlocks);
+    } else if (direction === 'down' && index < blocks.length - 1) {
+      const newBlocks = [...blocks];
+      [newBlocks[index + 1], newBlocks[index]] = [newBlocks[index], newBlocks[index + 1]];
+      setBlocks(newBlocks);
+    }
+  };
+
+  // Checklist Item Management
+  const addChecklistItem = (blockId: string) => {
+    setBlocks(blocks.map(b => {
+      if (b.id === blockId && b.items) {
+        return { ...b, items: [...b.items, 'New Item'] };
+      }
+      return b;
+    }));
+  };
+
+  const updateChecklistItem = (blockId: string, itemIndex: number, text: string) => {
+    setBlocks(blocks.map(b => {
+      if (b.id === blockId && b.items) {
+        const newItems = [...b.items];
+        newItems[itemIndex] = text;
+        return { ...b, items: newItems };
+      }
+      return b;
+    }));
+  };
+
+  const removeChecklistItem = (blockId: string, itemIndex: number) => {
+    setBlocks(blocks.map(b => {
+      if (b.id === blockId && b.items) {
+        return { ...b, items: b.items.filter((_, idx) => idx !== itemIndex) };
+      }
+      return b;
+    }));
+  };
+
+  const handleSave = () => {
+    if (!templateName.trim()) {
+      alert("Please enter a template name.");
+      return;
+    }
+
+    // Find theme based on selected color
+    const theme = colors.find(c => c.class === selectedColor)?.theme || colors[0].theme;
+
+    const newTemplate: Template = {
+      id: `custom-${Date.now()}`,
+      title: templateName,
+      description: `${category} template with ${blocks.length} blocks.`,
+      category,
+      icon: selectedIcon, // Use emoji or icon name
+      colorTheme: theme,
+      blocks: blocks
+    };
+    onSave(newTemplate);
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setSelectedIcon(emojiData.emoji);
+    setShowIconPicker(false);
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-full overflow-hidden animate-fade-in-up">
       {/* Settings Panel */}
@@ -42,21 +121,22 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
             <span className="material-symbols-outlined text-primary">tune</span>
             Template Settings
           </h2>
-          
+
           <div className="space-y-6">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Name</label>
-              <input 
+              <input
                 value={templateName}
                 onChange={(e) => setTemplateName(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-primary focus:bg-white dark:focus:bg-card-dark focus:ring-0 transition-all font-medium text-gray-900 dark:text-white placeholder-gray-400 text-sm" 
-                type="text" 
+                className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-primary focus:bg-white dark:focus:bg-card-dark focus:ring-0 transition-all font-medium text-gray-900 dark:text-white placeholder-gray-400 text-sm"
+                type="text"
+                placeholder="e.g. Weekly Review"
               />
             </div>
-            
+
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2">Category</label>
-              <select 
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-background-dark border-transparent focus:border-primary focus:bg-white dark:focus:bg-card-dark focus:ring-0 transition-all font-medium text-gray-900 dark:text-white text-sm"
@@ -67,48 +147,60 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
                 <option>General</option>
               </select>
             </div>
-            
+
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Appearance</label>
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-12 w-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center border-2 border-primary">
-                  <span className="material-symbols-outlined text-2xl">wb_sunny</span>
+                <div className={`h-12 w-12 rounded-xl bg-primary/10 ${selectedColor} flex items-center justify-center border-2 border-current relative`}>
+                  {selectedIcon.match(/^[a-z_]+$/) ? (
+                    <span className="material-symbols-outlined text-2xl">{selectedIcon}</span>
+                  ) : (
+                    <span className="text-2xl">{selectedIcon}</span>
+                  )}
                 </div>
-                <button className="px-4 py-2 bg-gray-50 dark:bg-background-dark hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 transition-colors">Change Icon</button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowIconPicker(!showIconPicker)}
+                    className="px-4 py-2 bg-gray-50 dark:bg-background-dark hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm font-semibold text-gray-600 dark:text-gray-300 transition-colors"
+                  >
+                    Change Icon
+                  </button>
+                  {showIconPicker && (
+                    <div className="absolute top-full left-0 mt-2 z-50 shadow-xl rounded-xl overflow-hidden">
+                      <div className="fixed inset-0 z-40" onClick={() => setShowIconPicker(false)}></div>
+                      <div className="relative z-50">
+                        <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.AUTO} width={300} height={400} />
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex gap-2 flex-wrap">
-                <button className="w-8 h-8 rounded-full bg-primary ring-2 ring-offset-2 ring-primary dark:ring-offset-card-dark"></button>
-                <button className="w-8 h-8 rounded-full bg-[#CCAB48] hover:scale-110 transition-transform"></button>
-                <button className="w-8 h-8 rounded-full bg-pink-500 hover:scale-110 transition-transform"></button>
-                <button className="w-8 h-8 rounded-full bg-indigo-500 hover:scale-110 transition-transform"></button>
-                <button className="w-8 h-8 rounded-full bg-emerald-500 hover:scale-110 transition-transform"></button>
+                {colors.map((c) => (
+                  <button
+                    key={c.name}
+                    onClick={() => setSelectedColor(c.class)}
+                    className={`w-8 h-8 rounded-full ${c.bg} hover:scale-110 transition-transform ${selectedColor === c.class ? 'ring-2 ring-offset-2 ring-gray-400' : ''}`}
+                    title={c.name}
+                  />
+                ))}
               </div>
             </div>
-            
+
             <div className="h-px bg-gray-100 dark:bg-gray-800 my-2"></div>
-            
+
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-primary mb-4 flex items-center gap-2">
                 <span className="material-symbols-outlined text-sm">auto_awesome</span>
-                AI Features
+                AI Features (Coming Soon)
               </label>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 opacity-50 pointer-events-none">
                 <div>
                   <p className="text-sm font-semibold text-gray-900 dark:text-white">Sentiment Analysis</p>
                   <p className="text-xs text-gray-500">Track emotional tone over time</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input type="checkbox" defaultChecked className="sr-only peer" />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">Auto-Prompts</p>
-                  <p className="text-xs text-gray-500">Suggest follow-up questions</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input type="checkbox" className="sr-only peer" />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
@@ -119,26 +211,22 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
 
       {/* Editor Panel */}
       <div className="flex-1 flex flex-col h-full bg-background-light dark:bg-background-dark relative overflow-hidden">
-        
+
         {/* Editor Toolbar */}
         <div className="bg-white/80 dark:bg-card-dark/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 px-6 py-4 flex items-center justify-between z-10 sticky top-0">
           <div className="flex items-center gap-2">
-            <button 
+            <button
               onClick={onBack}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-500 transition-colors"
             >
               <span className="material-symbols-outlined">arrow_back</span>
             </button>
             <span className="text-sm font-medium text-gray-400">Editing:</span>
-            <span className="text-sm font-bold text-gray-900 dark:text-white">{templateName}</span>
+            <span className="text-sm font-bold text-gray-900 dark:text-white">{templateName || 'Untitled'}</span>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-5 py-2.5 rounded-xl text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex items-center gap-2">
-              <span className="material-symbols-outlined text-lg">visibility</span>
-              Preview
-            </button>
-            <button 
-              onClick={onSave}
+            <button
+              onClick={handleSave}
               className="px-5 py-2.5 rounded-xl text-sm font-bold bg-primary text-white hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all flex items-center gap-2"
             >
               <span className="material-symbols-outlined text-lg">save</span>
@@ -150,7 +238,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
         {/* Editor Content */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8">
           <div className="max-w-3xl mx-auto">
-            
+
             {/* Add Block Grid */}
             <div className="mb-8">
               <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-4 ml-1">Add Block</h3>
@@ -184,38 +272,43 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
 
             {/* Blocks List */}
             <div className="space-y-4">
-              {blocks.map((block) => (
+              {blocks.map((block, index) => (
                 <div key={block.id} className="group bg-white dark:bg-card-dark rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm p-1 hover:ring-2 ring-primary/50 transition-all flex gap-0 animate-fade-in-up">
-                  <div className="w-10 flex items-center justify-center cursor-move text-gray-300 hover:text-gray-600 dark:hover:text-gray-200">
-                    <span className="material-symbols-outlined">drag_indicator</span>
+                  <div className="w-10 flex flex-col items-center justify-center gap-1 border-r border-gray-50 dark:border-gray-800 mr-2">
+                    <button onClick={() => moveBlock(index, 'up')} disabled={index === 0} className="text-gray-300 hover:text-primary disabled:opacity-30 disabled:hover:text-gray-300">
+                      <span className="material-symbols-outlined">keyboard_arrow_up</span>
+                    </button>
+                    <span className="material-symbols-outlined text-gray-300 text-sm">drag_handle</span>
+                    <button onClick={() => moveBlock(index, 'down')} disabled={index === blocks.length - 1} className="text-gray-300 hover:text-primary disabled:opacity-30 disabled:hover:text-gray-300">
+                      <span className="material-symbols-outlined">keyboard_arrow_down</span>
+                    </button>
                   </div>
                   <div className="flex-1 py-4 pr-4">
                     <div className="flex justify-between items-start mb-3">
                       <div className="w-full">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className={`material-symbols-outlined text-lg ${
-                            block.type === 'mood' ? 'text-amber-500' :
-                            block.type === 'question' ? 'text-blue-500' :
-                            block.type === 'checklist' ? 'text-emerald-500' : 'text-gray-500'
-                          }`}>
+                          <span className={`material-symbols-outlined text-lg ${block.type === 'mood' ? 'text-amber-500' :
+                              block.type === 'question' ? 'text-blue-500' :
+                                block.type === 'checklist' ? 'text-emerald-500' : 'text-gray-500'
+                            }`}>
                             {block.type === 'mood' ? 'sentiment_satisfied' :
-                             block.type === 'question' ? 'help' :
-                             block.type === 'checklist' ? 'check_box' : 'short_text'}
+                              block.type === 'question' ? 'help' :
+                                block.type === 'checklist' ? 'check_box' : 'short_text'}
                           </span>
                           <span className="text-xs font-bold uppercase text-gray-400 tracking-wider">
                             {block.type === 'mood' ? 'Mood Picker' :
-                             block.type === 'question' ? 'Question' :
-                             block.type === 'checklist' ? 'Checklist' : 'Free Text'}
+                              block.type === 'question' ? 'Question' :
+                                block.type === 'checklist' ? 'Checklist' : 'Free Text'}
                           </span>
                         </div>
-                        <input 
-                          className="text-lg font-bold text-gray-900 dark:text-white bg-transparent border-0 border-b border-transparent hover:border-gray-200 focus:border-primary focus:ring-0 p-0 w-full transition-colors placeholder-gray-400" 
-                          type="text" 
+                        <input
+                          className="text-lg font-bold text-gray-900 dark:text-white bg-transparent border-0 border-b border-transparent hover:border-gray-200 focus:border-primary focus:ring-0 p-0 w-full transition-colors placeholder-gray-400"
+                          type="text"
                           value={block.title}
                           onChange={(e) => updateBlockTitle(block.id, e.target.value)}
                         />
                       </div>
-                      <button onClick={() => removeBlock(block.id)} className="text-gray-300 hover:text-red-500 transition-colors p-1">
+                      <button onClick={() => removeBlock(block.id)} className="text-gray-300 hover:text-red-500 transition-colors p-1" title="Remove Block">
                         <span className="material-symbols-outlined">delete</span>
                       </button>
                     </div>
@@ -238,15 +331,23 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
                     {block.type === 'checklist' && block.items && (
                       <div className="space-y-2">
                         {block.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center gap-2">
-                            <input className="rounded border-gray-300 text-primary focus:ring-primary" disabled type="checkbox"/>
-                            <input className="text-sm bg-transparent border-none p-0 focus:ring-0 text-gray-600 dark:text-gray-300 w-full" type="text" value={item} readOnly/>
+                          <div key={idx} className="flex items-center gap-2 group/item">
+                            <input className="rounded border-gray-300 text-primary focus:ring-primary" disabled type="checkbox" />
+                            <input
+                              className="text-sm bg-transparent border-none p-0 focus:ring-0 text-gray-600 dark:text-gray-300 w-full border-b border-transparent focus:border-gray-300"
+                              type="text"
+                              value={item}
+                              onChange={(e) => updateChecklistItem(block.id, idx, e.target.value)}
+                            />
+                            <button onClick={() => removeChecklistItem(block.id, idx)} className="text-gray-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 transition-opacity">
+                              <span className="material-symbols-outlined text-sm">close</span>
+                            </button>
                           </div>
                         ))}
-                         <div className="flex items-center gap-2 opacity-60">
-                            <span className="material-symbols-outlined text-gray-400 text-sm">add</span>
-                            <span className="text-sm text-gray-400 italic">Add checklist item...</span>
-                         </div>
+                        <button onClick={() => addChecklistItem(block.id)} className="flex items-center gap-2 hover:text-primary transition-colors">
+                          <span className="material-symbols-outlined text-gray-400 hover:text-primary text-sm">add</span>
+                          <span className="text-sm text-gray-400 hover:text-primary italic">Add checklist item...</span>
+                        </button>
                       </div>
                     )}
                     {block.type === 'free_text' && (
@@ -257,13 +358,15 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
               ))}
             </div>
 
-            {/* Drop Zone */}
-            <div className="mt-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800/50 hover:border-primary/50 hover:text-primary transition-all cursor-pointer">
-              <span className="material-symbols-outlined text-3xl mb-1">add_circle</span>
-              <span className="text-sm font-medium">Drag blocks here to add</span>
-            </div>
-            
-            <div className="h-20"></div> 
+            {/* Drop Zone Placeholder */}
+            {blocks.length === 0 && (
+              <div className="mt-4 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl h-32 flex flex-col items-center justify-center text-gray-400">
+                <span className="material-symbols-outlined text-3xl mb-1">post_add</span>
+                <span className="text-sm font-medium">Start adding blocks from above</span>
+              </div>
+            )}
+
+            <div className="h-20"></div>
           </div>
         </div>
       </div>

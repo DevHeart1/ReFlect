@@ -31,5 +31,21 @@ export interface TemplateBlock {
   id: string;
   type: 'question' | 'mood' | 'checklist' | 'free_text';
   title: string;
-  items?: string[];
+  items?: string[]; // For checklists
+}
+
+export interface Template {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  icon: string;
+  colorTheme?: {
+    bg: string;
+    text: string;
+    iconBg: string;
+    groupHoverText: string;
+    gradient: string;
+  };
+  blocks?: TemplateBlock[]; // Custom templates will have blocks
 }
