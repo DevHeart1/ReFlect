@@ -15,8 +15,8 @@ export const SettingsSidebar: React.FC = () => {
                     <button
                         onClick={() => navigate('/settings/general')}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive('/settings/general')
-                                ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
-                                : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
+                            ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
+                            : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
                             }`}
                     >
                         <span className="material-symbols-outlined text-[20px]">settings_suggest</span>
@@ -26,8 +26,8 @@ export const SettingsSidebar: React.FC = () => {
                     <button
                         onClick={() => navigate('/settings/profile')}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive('/settings/profile')
-                                ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
-                                : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
+                            ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
+                            : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
                             }`}
                     >
                         <span className="material-symbols-outlined text-[20px]">badge</span>
@@ -37,8 +37,8 @@ export const SettingsSidebar: React.FC = () => {
                     <button
                         onClick={() => navigate('/settings')}
                         className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive('/settings')
-                                ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
-                                : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
+                            ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
+                            : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
                             }`}
                     >
                         <span className="material-symbols-outlined text-[20px]">security</span>
@@ -46,7 +46,11 @@ export const SettingsSidebar: React.FC = () => {
                     </button>
 
                     <button
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all text-left"
+                        onClick={() => navigate('/settings/data')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive('/settings/data')
+                            ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
+                            : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
+                            }`}
                     >
                         <span className="material-symbols-outlined text-[20px]">database</span>
                         Data Management

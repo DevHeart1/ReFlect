@@ -11,4 +11,5 @@ export { AllEntriesPage } from './AllEntriesPage';
 export { NotificationsPage } from './NotificationsPage';
 export { GeneralSettingsPage } from './GeneralSettingsPage';
 export { ProfileSettingsPage } from './ProfileSettingsPage';
+export { DataManagementPage } from './DataManagementPage';
 
