@@ -86,6 +86,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
     }));
   };
 
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [newTemplate, setNewTemplate] = useState<Template | null>(null);
+
   const handleSave = () => {
     if (!templateName.trim()) {
       alert("Please enter a template name.");
@@ -95,7 +98,7 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
     // Find theme based on selected color
     const theme = colors.find(c => c.class === selectedColor)?.theme || colors[0].theme;
 
-    const newTemplate: Template = {
+    const template: Template = {
       id: `custom-${Date.now()}`,
       title: templateName,
       description: `${category} template with ${blocks.length} blocks.`,
@@ -104,7 +107,9 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
       colorTheme: theme,
       blocks: blocks
     };
-    onSave(newTemplate);
+
+    setNewTemplate(template);
+    setShowSuccessModal(true);
   };
 
   const onEmojiClick = (emojiData: EmojiClickData) => {
@@ -288,8 +293,8 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
                       <div className="w-full">
                         <div className="flex items-center gap-2 mb-1">
                           <span className={`material-symbols-outlined text-lg ${block.type === 'mood' ? 'text-amber-500' :
-                              block.type === 'question' ? 'text-blue-500' :
-                                block.type === 'checklist' ? 'text-emerald-500' : 'text-gray-500'
+                            block.type === 'question' ? 'text-blue-500' :
+                              block.type === 'checklist' ? 'text-emerald-500' : 'text-gray-500'
                             }`}>
                             {block.type === 'mood' ? 'sentiment_satisfied' :
                               block.type === 'question' ? 'help' :
@@ -370,6 +375,31 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
           </div>
         </div>
       </div>
+      {/* Success Modal */}
+      {showSuccessModal && newTemplate && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+          <div className="relative bg-white dark:bg-[#2d3135] rounded-xl shadow-2xl max-w-sm w-full p-6 animate-fade-in-up text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center mb-4 mx-auto">
+              <span className="material-symbols-outlined text-4xl">check_circle</span>
+            </div>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Template Created!</h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+              <strong>{newTemplate.title}</strong> has been added to your collection.
+            </p>
+            <button
+              onClick={() => {
+                if (newTemplate) {
+                  onSave(newTemplate);
+                }
+              }}
+              className="w-full py-3 rounded-lg font-bold bg-primary text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+            >
+              Go to Templates
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { generateMindfulnessPrompt } from '../services/geminiService';
 import { RichTextEditor } from './editor/RichTextEditor';
+import { Template } from '../types';
 
 interface JournalEditorProps {
   onBack: () => void;
@@ -10,6 +11,7 @@ interface JournalEditorProps {
 
 export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) => {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -21,10 +23,46 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
 
   const editorRef = useRef<any>(null);
 
-  // Handle URL Prompts
+  // Handle URL Prompts and Templates
   useEffect(() => {
+    const template = location.state?.template as Template | undefined;
     const promptType = searchParams.get('prompt');
-    if (promptType) {
+
+    if (template) {
+      setTitle(template.title);
+      let initialContent = '';
+
+      if (template.blocks) {
+        initialContent = template.blocks.map(block => {
+          switch (block.type) {
+            case 'question':
+              return `<h3>${block.title}</h3><p></p>`;
+            case 'mood':
+              return `<h3>${block.title}</h3><p><em>(Mood log placeholder)</em></p>`;
+            case 'checklist':
+              const items = block.items?.map(item => `<li>${item}</li>`).join('') || '';
+              return `<h3>${block.title}</h3><ul>${items}</ul>`;
+            case 'free_text':
+              return `<h3>${block.title}</h3><p></p>`;
+            default:
+              return '';
+          }
+        }).join('');
+      } else {
+        // Fallback for hardcoded templates like 'gratitude' that might not have 'blocks' defined in the generic way yet
+        // In the updated Types, 'gratitude' card doesn't have blocks, but we can infer or leave empty.
+        // Actually, the user wants "functional logic". 
+        // If I want 'gratitude' to work, I should probably standardise it or handle it here.
+        if (template.id === 'gratitude') {
+          initialContent = "<h2>Today I am grateful for:</h2><ol><li><p></p></li><li><p></p></li><li><p></p></li></ol>";
+        } else if (template.id === 'morning') {
+          initialContent = "<h3>Morning Intentions</h3><p>Today I want to focus on...</p>";
+        } else {
+          initialContent = `<p>${template.description}</p>`;
+        }
+      }
+      setContent(initialContent);
+    } else if (promptType) {
       if (promptType === 'feeling') {
         setTitle('Morning Check-in');
         setContent("<p>Right now, I'm feeling...</p>");
@@ -42,7 +80,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
       else if (hour < 18) setTitle('Afternoon Thoughts');
       else setTitle('Evening Unwind');
     }
-  }, [searchParams]);
+  }, [searchParams, location.state]);
 
   const handleRefreshPrompts = async () => {
     setIsGenerating(true);

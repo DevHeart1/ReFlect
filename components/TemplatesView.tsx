@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { generateGratitudePrompt } from '../services/geminiService';
 
 
@@ -38,15 +39,12 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ templates, onAddTe
     return matchesSearch && matchesCategory;
   });
 
+  const navigate = useNavigate();
+
   const handleArrowClick = (e: React.MouseEvent, template: Template) => {
     e.stopPropagation();
-    if (template.id === 'gratitude') {
-      setActiveTemplate(template);
-      setShowConfirmModal(true);
-    } else {
-      // Default behavior for other cards
-      console.log(`Navigating to ${template.title}`);
-    }
+    setActiveTemplate(template);
+    setShowConfirmModal(true);
   };
 
   const handleEditClick = (e: React.MouseEvent, template: Template) => {
@@ -139,6 +137,7 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ templates, onAddTe
           return (
             <div
               key={template.id}
+              onClick={(e) => handleArrowClick(e, template)}
               className={`group bg-card-light dark:bg-card-dark p-6 rounded-2xl border border-gray-100 dark:border-gray-800 shadow-soft hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer relative overflow-hidden flex flex-col h-full
               ${isGratitude ? 'hover:scale-[1.02]' : ''}`}
             >
@@ -250,7 +249,9 @@ export const TemplatesView: React.FC<TemplatesViewProps> = ({ templates, onAddTe
               </button>
               <button
                 onClick={() => {
-                  console.log("Starting entry...");
+                  if (activeTemplate) {
+                    navigate('/editor', { state: { template: activeTemplate } });
+                  }
                   setShowConfirmModal(false);
                 }}
                 className="flex-1 py-2.5 rounded-lg font-medium bg-primary text-white hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
