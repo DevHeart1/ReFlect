@@ -16,6 +16,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     isRecording
 }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [showFontMenu, setShowFontMenu] = useState(false);
 
     if (!editor) {
         return null;
@@ -30,27 +31,81 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
         onClick,
         isActive = false,
         icon,
-        tooltip
+        tooltip,
+        className = ''
     }: {
         onClick: () => void;
         isActive?: boolean;
         icon: string;
-        tooltip: string
+        tooltip: string;
+        className?: string;
     }) => (
         <button
             onClick={onClick}
             title={tooltip}
-            className={`p-2 rounded-lg transition-all ${isActive
+            className={`p-2 rounded-lg transition-all flex items-center justify-center ${isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
-                }`}
+                } ${className}`}
         >
             <span className="material-symbols-outlined text-[20px]">{icon}</span>
         </button>
     );
 
+    const setFont = (font: string) => {
+        editor.chain().focus().setFontFamily(font).run();
+        setShowFontMenu(false);
+    };
+
     return (
         <div className="flex flex-wrap items-center gap-1 p-2 bg-white dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-20 transition-all duration-300">
+            {/* Fonts */}
+            <div className="relative">
+                <button
+                    onClick={() => setShowFontMenu(!showFontMenu)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                    <span>Font</span>
+                    <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                </button>
+                {showFontMenu && (
+                    <div className="absolute top-full left-0 mt-1 py-1 w-40 bg-white dark:bg-card-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 flex flex-col">
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setShowFontMenu(false)}
+                        ></div>
+                        <div className="relative z-50 flex flex-col">
+                            <button
+                                onClick={() => setFont('Inter, sans-serif')}
+                                className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-sans"
+                            >
+                                Sans Serif
+                            </button>
+                            <button
+                                onClick={() => setFont('serif')}
+                                className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-serif"
+                            >
+                                Serif
+                            </button>
+                            <button
+                                onClick={() => setFont('monospace')}
+                                className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-mono"
+                            >
+                                Monospace
+                            </button>
+                            <button
+                                onClick={() => setFont('cursive')}
+                                className="px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 font-serif italic"
+                            >
+                                Cursive
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
+
             {/* Text Style */}
             <ToolbarButton
                 onClick={() => editor.chain().focus().toggleBold().run()}
@@ -78,13 +133,19 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
                 onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
                 isActive={editor.isActive('heading', { level: 1 })}
                 icon="title"
-                tooltip="Heading 1"
+                tooltip="Heading 1 (Big)"
             />
             <ToolbarButton
                 onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
                 isActive={editor.isActive('heading', { level: 2 })}
                 icon="format_h2"
-                tooltip="Heading 2"
+                tooltip="Heading 2 (Medium)"
+            />
+            <ToolbarButton
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                isActive={editor.isActive('heading', { level: 3 })}
+                icon="format_h3"
+                tooltip="Heading 3 (Small)"
             />
 
             <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>

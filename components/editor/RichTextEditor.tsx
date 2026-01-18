@@ -6,6 +6,7 @@ import Underline from '@tiptap/extension-underline';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
+import FontFamily from '@tiptap/extension-font-family';
 import { Node, mergeAttributes } from '@tiptap/core';
 
 import { EditorToolbar } from './EditorToolbar';
@@ -75,6 +76,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             Underline,
             TextStyle,
             Color,
+            FontFamily,
             AudioNode,
             Placeholder.configure({
                 placeholder,
