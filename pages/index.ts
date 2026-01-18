@@ -9,4 +9,5 @@ export { YearReportPage } from './YearReportPage';
 export { EntryDetailPage } from './EntryDetailPage';
 export { AllEntriesPage } from './AllEntriesPage';
 export { NotificationsPage } from './NotificationsPage';
+export { GeneralSettingsPage } from './GeneralSettingsPage';
 

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { SettingsSidebar } from './SettingsSidebar';
 
 export const PrivacySettings: React.FC = () => {
   const [biometricEnabled, setBiometricEnabled] = useState(true);
@@ -8,39 +9,12 @@ export const PrivacySettings: React.FC = () => {
 
   return (
     <div className="flex-1 flex overflow-hidden h-full bg-gray-50/50 dark:bg-background-dark animate-fade-in-up">
-      {/* Settings Sidebar - Hidden on mobile, visible on desktop */}
-      <div className="w-64 border-r border-gray-100 dark:border-gray-800 bg-white/50 dark:bg-card-dark/50 hidden md:block overflow-y-auto shrink-0">
-        <div className="p-6">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Settings</h2>
-          <nav className="space-y-1">
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all">
-              <span className="material-symbols-outlined text-[20px]">person</span>
-              General
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all">
-              <span className="material-symbols-outlined text-[20px]">badge</span>
-              Profile
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold bg-primary/10 text-primary border-l-4 border-primary transition-all">
-              <span className="material-symbols-outlined text-[20px]">security</span>
-              Privacy & Security
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all">
-              <span className="material-symbols-outlined text-[20px]">database</span>
-              Data Management
-            </button>
-            <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 transition-all">
-              <span className="material-symbols-outlined text-[20px]">notifications_active</span>
-              Notifications
-            </button>
-          </nav>
-        </div>
-      </div>
+      <SettingsSidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-6 lg:p-10">
         <div className="max-w-3xl mx-auto space-y-8">
-          
+
           {/* Header */}
           <div className="space-y-2">
             <h2 className="text-3xl font-black tracking-tight text-[#131516] dark:text-white">Privacy & Security</h2>
@@ -77,10 +51,10 @@ export const PrivacySettings: React.FC = () => {
                 </div>
                 <div className="flex-shrink-0">
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
-                      checked={biometricEnabled} 
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
+                      checked={biometricEnabled}
                       onChange={() => setBiometricEnabled(!biometricEnabled)}
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
@@ -92,7 +66,7 @@ export const PrivacySettings: React.FC = () => {
                   <h4 className="font-bold text-gray-900 dark:text-white">Auto-Lock Timer</h4>
                   <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Automatically lock the app after a period of inactivity.</p>
                 </div>
-                <select 
+                <select
                   value={autoLockTimer}
                   onChange={(e) => setAutoLockTimer(e.target.value)}
                   className="bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-primary focus:border-primary py-2 px-3"
@@ -120,9 +94,9 @@ export const PrivacySettings: React.FC = () => {
                 </div>
                 <div className="flex-shrink-0">
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
                       checked={aiPersonalization}
                       onChange={() => setAiPersonalization(!aiPersonalization)}
                     />
@@ -137,9 +111,9 @@ export const PrivacySettings: React.FC = () => {
                 </div>
                 <div className="flex-shrink-0">
                   <label className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer" 
+                    <input
+                      type="checkbox"
+                      className="sr-only peer"
                       checked={anonymousData}
                       onChange={() => setAnonymousData(!anonymousData)}
                     />
@@ -171,7 +145,7 @@ export const PrivacySettings: React.FC = () => {
           <div className="bg-blue-50/50 dark:bg-primary/5 p-4 rounded-lg flex gap-3 items-start border border-primary/10">
             <span className="material-symbols-outlined text-primary text-[20px] mt-0.5">info</span>
             <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-              At Re-Flect, we believe your privacy is a fundamental human right. We never sell your data to third parties, and all AI processing is designed with privacy-first principles. 
+              At Re-Flect, we believe your privacy is a fundamental human right. We never sell your data to third parties, and all AI processing is designed with privacy-first principles.
               <a className="text-primary font-bold hover:underline ml-1" href="#">Learn more in our Privacy Policy.</a>
             </p>
           </div>
