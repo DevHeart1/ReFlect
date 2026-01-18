@@ -12,6 +12,8 @@ import TextAlign from '@tiptap/extension-text-align';
 import Youtube from '@tiptap/extension-youtube';
 
 import { EditorToolbar } from './EditorToolbar';
+import { YouTubeModal } from './YouTubeModal';
+import { CameraModal } from './CameraModal';
 
 import { Extension } from '@tiptap/core';
 
@@ -151,6 +153,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     placeholder = 'Start writing...'
 }) => {
     const [isRecording, setIsRecording] = useState(false);
+    const [showYoutubeModal, setShowYoutubeModal] = useState(false);
+    const [showCameraModal, setShowCameraModal] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const chunksRef = useRef<Blob[]>([]);
 
@@ -254,28 +258,21 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
     };
 
     const handleCameraCapture = () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*,video/*';
-        input.setAttribute('capture', 'environment');
-        input.onchange = async (e) => {
-            const file = (e.target as HTMLInputElement).files?.[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                const type = file.type.startsWith('video/') ? 'video' : 'image';
-                if (type === 'video') {
-                    editor?.chain().focus().insertContent({ type: 'video', attrs: { src: url } }).run();
-                } else {
-                    editor?.chain().focus().setImage({ src: url }).run();
-                }
-            }
-        };
-        input.click();
+        setShowCameraModal(true);
+    };
+
+    const handleCameraImage = (src: string) => {
+        if (editor) {
+            editor.chain().focus().setImage({ src }).run();
+        }
     };
 
     const handleYoutubeEmbed = () => {
-        const url = prompt('Enter YouTube URL');
-        if (url && editor) {
+        setShowYoutubeModal(true);
+    };
+
+    const handleYoutubeInsert = (url: string) => {
+        if (editor) {
             editor.commands.setYoutubeVideo({ src: url });
         }
     };
@@ -332,6 +329,18 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
                 isRecording={isRecording}
             />
             <EditorContent editor={editor} />
+
+            <YouTubeModal
+                isOpen={showYoutubeModal}
+                onClose={() => setShowYoutubeModal(false)}
+                onInsert={handleYoutubeInsert}
+            />
+
+            <CameraModal
+                isOpen={showCameraModal}
+                onClose={() => setShowCameraModal(false)}
+                onCapture={handleCameraImage}
+            />
         </div>
     );
 };

@@ -25,6 +25,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
 }) => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showFontMenu, setShowFontMenu] = useState(false);
+    const [showFontSizeMenu, setShowFontSizeMenu] = useState(false);
     const [showMediaMenu, setShowMediaMenu] = useState(false);
 
     if (!editor) {
@@ -97,10 +98,39 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             </div>
 
             {/* Font Size */}
-            <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-0.5 ml-1">
-                <button onClick={() => editor.chain().focus().setFontSize('16px').run()} className="px-2 py-1 text-xs font-bold hover:bg-white dark:hover:bg-gray-700 rounded-md" title="Small">S</button>
-                <button onClick={() => editor.chain().focus().setFontSize('20px').run()} className="px-2 py-1 text-xs font-bold hover:bg-white dark:hover:bg-gray-700 rounded-md" title="Medium">M</button>
-                <button onClick={() => editor.chain().focus().setFontSize('28px').run()} className="px-2 py-1 text-xs font-bold hover:bg-white dark:hover:bg-gray-700 rounded-md" title="Large">L</button>
+            {/* Font Size */}
+            <div className="relative">
+                <button
+                    onClick={() => setShowFontSizeMenu(!showFontSizeMenu)}
+                    className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ml-1"
+                    title="Font Size"
+                >
+                    <span className="w-5 text-center">{editor.getAttributes('textStyle').fontSize?.replace('px', '') || '16'}</span>
+                    <span className="material-symbols-outlined text-[16px]">expand_more</span>
+                </button>
+                {showFontSizeMenu && (
+                    <div className="absolute top-full left-0 mt-1 py-1 w-20 bg-white dark:bg-card-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 z-50 flex flex-col max-h-48 overflow-y-auto">
+                        <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setShowFontSizeMenu(false)}
+                        ></div>
+                        <div className="relative z-50 flex flex-col">
+                            {['12', '14', '16', '18', '20', '24', '30', '36', '48', '60', '72'].map((size) => (
+                                <button
+                                    key={size}
+                                    onClick={() => {
+                                        editor.chain().focus().setFontSize(`${size}px`).run();
+                                        setShowFontSizeMenu(false);
+                                    }}
+                                    className={`px-3 py-1.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-800 ${editor.getAttributes('textStyle').fontSize === `${size}px` ? 'bg-primary/10 text-primary' : ''
+                                        }`}
+                                >
+                                    {size}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-1"></div>
