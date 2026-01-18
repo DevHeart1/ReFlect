@@ -36,7 +36,7 @@ export const RecentEntries: React.FC<RecentEntriesProps> = ({ entries, onNewEntr
             </div>
             <h4 className="font-bold text-gray-900 dark:text-white mb-2 line-clamp-1">{entry.title}</h4>
             <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 mb-4">
-              {entry.excerpt}
+              {entry.excerpt.replace(/<[^>]*>/g, '')}
             </p>
             <div className="flex gap-2">
               <span className="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-[10px] font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wide">

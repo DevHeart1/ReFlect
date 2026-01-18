@@ -8,8 +8,93 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
 import { Node, mergeAttributes } from '@tiptap/core';
+import TextAlign from '@tiptap/extension-text-align';
+import Youtube from '@tiptap/extension-youtube';
 
 import { EditorToolbar } from './EditorToolbar';
+
+import { Extension } from '@tiptap/core';
+
+// --- Custom Font Size Extension ---
+const FontSize = Extension.create({
+    name: 'fontSize',
+    addOptions() {
+        return {
+            types: ['textStyle'],
+        }
+    },
+    addGlobalAttributes() {
+        return [
+            {
+                types: this.options.types,
+                attributes: {
+                    fontSize: {
+                        default: null,
+                        parseHTML: element => element.style.fontSize.replace(/['"]+/g, ''),
+                        renderHTML: attributes => {
+                            if (!attributes.fontSize) {
+                                return {}
+                            }
+                            return {
+                                style: `font-size: ${attributes.fontSize}`,
+                            }
+                        },
+                    },
+                },
+            },
+        ]
+    },
+    addCommands() {
+        return {
+            setFontSize: (fontSize: string) => ({ chain }) => {
+                return chain()
+                    .setMark('textStyle', { fontSize })
+                    .run()
+            },
+            unsetFontSize: () => ({ chain }) => {
+                return chain()
+                    .setMark('textStyle', { fontSize: null })
+                    .removeEmptyTextStyle()
+                    .run()
+            },
+        }
+    },
+});
+
+// --- Custom Video Node ---
+const VideoNode = Node.create({
+    name: 'video',
+    group: 'block',
+    atom: true,
+
+    addAttributes() {
+        return {
+            src: {
+                default: null,
+            },
+        }
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'video',
+            },
+        ]
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['video', mergeAttributes(HTMLAttributes, { controls: 'true', class: 'w-full max-h-[400px] rounded-xl my-4' })]
+    },
+
+    addNodeView() {
+        return ReactNodeViewRenderer(({ node }) => (
+            <NodeViewWrapper className="my-4">
+                <video controls src={node.attrs.src} className="w-full max-h-[400px] rounded-xl border border-gray-100 dark:border-gray-700 bg-black" />
+            </NodeViewWrapper>
+        ))
+    },
+});
 
 // --- Custom Audio Extension ---
 const AudioNode = Node.create({
@@ -77,7 +162,16 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             TextStyle,
             Color,
             FontFamily,
+            FontSize,
+            TextAlign.configure({
+                types: ['heading', 'paragraph', 'image', 'video'],
+            }),
+            Youtube.configure({
+                controls: false,
+                nocookie: true,
+            }),
             AudioNode,
+            VideoNode,
             Placeholder.configure({
                 placeholder,
             }),
@@ -125,6 +219,67 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         input.click();
     };
 
+    const handleVideoUpload = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'video/*';
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                editor?.chain().focus().insertContent({
+                    type: 'video',
+                    attrs: { src: url }
+                }).run();
+            }
+        };
+        input.click();
+    };
+
+    const handleAudioUpload = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'audio/*';
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                editor?.chain().focus().insertContent({
+                    type: 'audio',
+                    attrs: { src: url }
+                }).run();
+            }
+        };
+        input.click();
+    };
+
+    const handleCameraCapture = () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*,video/*';
+        input.setAttribute('capture', 'environment');
+        input.onchange = async (e) => {
+            const file = (e.target as HTMLInputElement).files?.[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                const type = file.type.startsWith('video/') ? 'video' : 'image';
+                if (type === 'video') {
+                    editor?.chain().focus().insertContent({ type: 'video', attrs: { src: url } }).run();
+                } else {
+                    editor?.chain().focus().setImage({ src: url }).run();
+                }
+            }
+        };
+        input.click();
+    };
+
+    const handleYoutubeEmbed = () => {
+        const url = prompt('Enter YouTube URL');
+        if (url && editor) {
+            editor.commands.setYoutubeVideo({ src: url });
+        }
+    };
+
     const handleVoiceRecord = async () => {
         if (isRecording) {
             // Stop recording
@@ -169,6 +324,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             <EditorToolbar
                 editor={editor}
                 onImageUpload={handleImageUpload}
+                onVideoUpload={handleVideoUpload}
+                onAudioUpload={handleAudioUpload}
+                onYoutubeEmbed={handleYoutubeEmbed}
+                onCameraCapture={handleCameraCapture}
                 onVoiceRecord={handleVoiceRecord}
                 isRecording={isRecording}
             />
