@@ -181,12 +181,12 @@ export const PersonalInsights: React.FC = () => {
                 <div key={d} className="text-center text-xs font-bold text-gray-400 py-2">{d}</div>
               ))}
               {calendarDays.map((entry, i) => (
-                <div key={entry?.id || i} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative border border-gray-100 dark:border-gray-700 hover:border-primary/50 transition-colors ${entry?.mood !== 'none' ? 'bg-gray-50 dark:bg-gray-800' : ''}`}>
-                  <span className={`text-sm mb-1 ${entry?.mood !== 'none' ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
-                    {new Date(entry?.date || new Date()).getDate()}
+                <div key={entry?.id || i} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative border border-gray-100 dark:border-gray-700 hover:border-primary/50 transition-colors ${entry && entry.mood !== 'none' ? 'bg-gray-50 dark:bg-gray-800' : ''}`}>
+                  <span className={`text-sm mb-1 ${entry && entry.mood !== 'none' ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
+                    {entry ? new Date(entry.date).getDate() : ''}
                   </span>
-                  {entry?.mood !== 'none' && (
-                    <div className={`w-3 h-3 rounded-full ${getMoodColor(entry!.mood)}`} title={entry!.mood}></div>
+                  {entry && entry.mood !== 'none' && (
+                    <div className={`w-3 h-3 rounded-full ${getMoodColor(entry.mood)}`} title={entry.mood}></div>
                   )}
                 </div>
               ))}
