@@ -9,6 +9,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu, isDarkMode, toggleTheme }) => {
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const navItems = [
     { path: '/', label: 'Journal', icon: 'book', exact: true },
     { path: '/insights', label: 'Insights', icon: 'bar_chart' },
@@ -83,16 +84,46 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu, isDar
         </div>
 
         {/* User Profile */}
-        <div className="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
-          <div
-            className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm"
-            style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg')" }}
-          />
-          <div className="flex flex-col">
-            <p className="text-sm font-bold text-gray-900 dark:text-white">Alex Morgan</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Pro Member</p>
-          </div>
-          <span className="material-symbols-outlined ml-auto text-gray-400">more_vert</span>
+        <div className="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="w-full flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 rounded-xl transition-colors text-left"
+          >
+            <div
+              className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm"
+              style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg')" }}
+            />
+            <div className="flex flex-col flex-1">
+              <p className="text-sm font-bold text-gray-900 dark:text-white">Alex Morgan</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Pro Member</p>
+            </div>
+            <span className="material-symbols-outlined text-gray-400">more_vert</span>
+          </button>
+
+          {/* Dropdown Menu */}
+          {isMenuOpen && (
+            <div className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-card-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animation-fade-in-up z-50">
+              <div className="p-1">
+                <NavLink
+                  to="/settings"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg w-full"
+                  onClick={() => { setIsMenuOpen(false); closeMobileMenu(); }}
+                >
+                  <span className="material-symbols-outlined text-lg">person</span>
+                  Profile Settings
+                </NavLink>
+                <button
+                  onClick={() => {
+                    import('../utils/storage').then(({ clearUserSession }) => clearUserSession());
+                  }}
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg w-full text-left"
+                >
+                  <span className="material-symbols-outlined text-lg">logout</span>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </>

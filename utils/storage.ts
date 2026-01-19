@@ -127,3 +127,13 @@ export const getUserProfile = (): UserProfile => {
 export const saveUserProfile = (profile: UserProfile) => {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
 };
+
+export const clearUserSession = () => {
+    // Clear all app-related data
+    localStorage.removeItem(SETTINGS_KEY);
+    localStorage.removeItem(PROFILE_KEY);
+    localStorage.removeItem(MOOD_CHECKINS_KEY);
+    localStorage.removeItem(STORAGE_KEY);
+    // Force reload to reset state
+    window.location.reload();
+};
