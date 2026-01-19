@@ -9,6 +9,7 @@ export const PersonalInsights: React.FC = () => {
   const [filteredEntries, setFilteredEntries] = useState<MoodCheckin[]>([]);
   const [streak, setStreak] = useState(0);
   const [topEmotion, setTopEmotion] = useState<{ label: string; count: number }>({ label: 'N/A', count: 0 });
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
     const data = getMoodCheckins();
@@ -158,30 +159,81 @@ export const PersonalInsights: React.FC = () => {
     }
   };
 
+  const CalendarModal = () => {
+    if (!isCalendarOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setIsCalendarOpen(false)}>
+        <div className="bg-white dark:bg-card-dark rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-scale-in" onClick={e => e.stopPropagation()}>
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/50 dark:bg-gray-800/50">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Mood Calendar</h2>
+              <p className="text-sm text-gray-500">Full history view</p>
+            </div>
+            <button onClick={() => setIsCalendarOpen(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-colors">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div className="p-6 max-h-[70vh] overflow-y-auto">
+            <div className="grid grid-cols-7 gap-4">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                <div key={d} className="text-center text-xs font-bold text-gray-400 py-2">{d}</div>
+              ))}
+              {calendarDays.map((entry, i) => (
+                <div key={entry?.id || i} className={`aspect-square rounded-xl flex flex-col items-center justify-center relative border border-gray-100 dark:border-gray-700 hover:border-primary/50 transition-colors ${entry?.mood !== 'none' ? 'bg-gray-50 dark:bg-gray-800' : ''}`}>
+                  <span className={`text-sm mb-1 ${entry?.mood !== 'none' ? 'font-bold text-gray-900 dark:text-gray-100' : 'text-gray-400'}`}>
+                    {new Date(entry?.date || new Date()).getDate()}
+                  </span>
+                  {entry?.mood !== 'none' && (
+                    <div className={`w-3 h-3 rounded-full ${getMoodColor(entry!.mood)}`} title={entry!.mood}></div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="p-4 bg-gray-50 dark:bg-gray-800/50 flex justify-end">
+            <button onClick={() => setIsCalendarOpen(false)} className="px-4 py-2 bg-white dark:bg-card-dark border border-gray-200 dark:border-gray-600 rounded-lg text-sm font-semibold shadow-sm hover:bg-gray-50 transition-colors">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-10 animate-fade-in-up">
+    <div className="max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-10 animate-fade-in-up relative">
+      <CalendarModal />
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
           <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">Your Insights</h2>
           <p className="text-gray-500 dark:text-gray-400 font-medium">Understand your emotional journey through data and reflection.</p>
         </div>
-        <div className="flex items-center gap-1 bg-white dark:bg-card-dark p-1 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
-          <button
-            onClick={() => setTimeRange('30days')}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${timeRange === '30days' ? 'bg-primary text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-          >
-            Last 30 Days
-          </button>
-          <button
-            onClick={() => setTimeRange('3months')}
-            className={`px-4 py-2 text-sm font-bold rounded-lg transition-all ${timeRange === '3months' ? 'bg-primary text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-          >
-            3 Months
-          </button>
-          <div className="px-3 py-2 text-gray-400 border-l border-gray-200 dark:border-gray-700 ml-1">
-            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+        <div className="flex items-center bg-white dark:bg-card-dark p-1.5 rounded-full shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-full p-1 relative">
+            <button
+              onClick={() => setTimeRange('30days')}
+              className={`px-6 py-2 text-sm font-bold rounded-full transition-all duration-300 z-10 ${timeRange === '30days' ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              Last 30 Days
+            </button>
+            <button
+              onClick={() => setTimeRange('3months')}
+              className={`px-6 py-2 text-sm font-bold rounded-full transition-all duration-300 z-10 ${timeRange === '3months' ? 'bg-[#2a5e6f] text-white shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'}`}
+            >
+              3 Months
+            </button>
           </div>
+          <div className="w-px h-6 bg-gray-200 dark:bg-gray-700 mx-3"></div>
+          <button
+            onClick={() => setIsCalendarOpen(true)}
+            className="p-2 text-gray-400 hover:text-primary transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 mr-1"
+            title="Open Full Calendar"
+          >
+            <span className="material-symbols-outlined text-[20px]">calendar_today</span>
+          </button>
         </div>
       </div>
 
