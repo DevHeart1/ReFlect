@@ -15,7 +15,7 @@ export const DailyMoodTracker: React.FC = () => {
   ];
 
   const secondaryEmotions = ['Anxious', 'Excited', 'Tired', 'Grateful', 'Frustrated', 'Inspired'];
-  
+
   const factors = [
     { label: 'Sleep', icon: 'bedtime', color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' },
     { label: 'Exercise', icon: 'fitness_center', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' },
@@ -50,14 +50,14 @@ export const DailyMoodTracker: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Main Tracker Column */}
         <div className="col-span-1 lg:col-span-8 flex flex-col gap-8">
-          
+
           {/* Mood Selection */}
           <section className="bg-card-light dark:bg-card-dark rounded-3xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-8 md:p-10 relative overflow-hidden">
             <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
             <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">How are you feeling today?</h3>
             <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-4">
               {moods.map((mood) => (
-                <button 
+                <button
                   key={mood.label}
                   onClick={() => setSelectedMood(mood.label)}
                   className="group flex flex-col items-center gap-3 transition-transform hover:-translate-y-2 focus:outline-none"
@@ -83,19 +83,19 @@ export const DailyMoodTracker: React.FC = () => {
               <span className="material-symbols-outlined text-primary">tune</span>
               Mood Details
             </h4>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Secondary Emotions */}
               <div>
                 <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Secondary Emotions</label>
                 <div className="flex flex-wrap gap-2">
                   {secondaryEmotions.map(tag => (
-                    <button 
+                    <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
                       className={`px-4 py-2 rounded-lg border transition-all 
-                        ${selectedTags.includes(tag) 
-                          ? 'bg-primary/10 border-primary text-primary font-medium' 
+                        ${selectedTags.includes(tag)
+                          ? 'bg-primary/10 border-primary text-primary font-medium'
                           : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-primary/50'
                         }`}
                     >
@@ -113,7 +113,7 @@ export const DailyMoodTracker: React.FC = () => {
                 <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">What's affecting you?</label>
                 <div className="grid grid-cols-2 gap-3">
                   {factors.map(factor => (
-                    <button 
+                    <button
                       key={factor.label}
                       onClick={() => toggleFactor(factor.label)}
                       className={`flex items-center gap-3 p-3 rounded-xl border text-left group transition-colors
@@ -140,17 +140,40 @@ export const DailyMoodTracker: React.FC = () => {
             {/* Note Area */}
             <div className="mt-8">
               <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Quick Note</label>
-              <textarea 
+              <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-primary h-24 resize-none p-4 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 text-sm" 
+                className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-primary h-24 resize-none p-4 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 text-sm"
                 placeholder="Add any thoughts about your mood..."
               ></textarea>
             </div>
 
             {/* Save Action */}
             <div className="mt-8 flex justify-end">
-              <button className="px-8 py-3 rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-lg shadow-primary/20 transition-all transform hover:scale-105 active:scale-95 flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (!selectedMood) return;
+
+                  import('../utils/storage').then(({ saveMoodCheckin, getMoodValue }) => {
+                    saveMoodCheckin({
+                      mood: selectedMood,
+                      moodValue: getMoodValue(selectedMood),
+                      secondaryEmotions: selectedTags,
+                      factors: selectedFactors,
+                      note
+                    });
+
+                    // Reset form or show success feedback
+                    setSelectedMood(null);
+                    setSelectedTags([]);
+                    setSelectedFactors([]);
+                    setNote('');
+                    alert('Mood check-in saved!');
+                  });
+                }}
+                disabled={!selectedMood}
+                className={`px-8 py-3 rounded-xl font-bold shadow-lg transition-all transform flex items-center gap-2 ${selectedMood ? 'bg-primary hover:bg-primary/90 text-white hover:scale-105 active:scale-95 shadow-primary/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
+              >
                 <span className="material-symbols-outlined">save</span>
                 Save Entry
               </button>
@@ -165,9 +188,9 @@ export const DailyMoodTracker: React.FC = () => {
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recent Entries</h3>
               <button className="text-xs font-bold text-primary hover:text-primary/80 uppercase tracking-wide">View All</button>
             </div>
-            
+
             <div className="relative pl-4 border-l border-gray-200 dark:border-gray-700 space-y-8 pb-4">
-              
+
               {/* Entry 1 */}
               <div className="relative pl-6 group cursor-pointer">
                 <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-white dark:ring-card-dark"></div>
@@ -211,8 +234,8 @@ export const DailyMoodTracker: React.FC = () => {
                 <p className="text-sm text-gray-500 mt-1 line-clamp-2">Just a regular afternoon. Nothing special happening, bit bored.</p>
               </div>
 
-               {/* Entry 4 */}
-               <div className="relative pl-6 group cursor-pointer">
+              {/* Entry 4 */}
+              <div className="relative pl-6 group cursor-pointer">
                 <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-rose-400 ring-4 ring-white dark:ring-card-dark"></div>
                 <div className="flex justify-between items-start mb-1">
                   <span className="text-xs font-bold text-gray-400">Oct 22, 10:15 AM</span>
