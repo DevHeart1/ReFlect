@@ -4,11 +4,9 @@ import { NavLink, useLocation } from 'react-router-dom';
 interface SidebarProps {
   isOpen: boolean;
   closeMobileMenu: () => void;
-  isDarkMode: boolean;
-  toggleTheme: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu, isDarkMode, toggleTheme }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const navItems = [
     { path: '/', label: 'Journal', icon: 'book', exact: true },
@@ -67,22 +65,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu, isDar
           ))}
         </nav>
 
-        {/* Theme Toggle */}
-        <div className="py-2 mt-4 border-t border-gray-100 dark:border-gray-800">
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
-          >
-            <span className="material-symbols-outlined">{isDarkMode ? 'light_mode' : 'dark_mode'}</span>
-            <span className="flex-1 text-left font-medium text-sm">{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
-
-            {/* Switch UI */}
-            <div className={`w-10 h-5 rounded-full relative transition-colors duration-300 ${isDarkMode ? 'bg-primary' : 'bg-gray-300'}`}>
-              <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-transform duration-300 ${isDarkMode ? 'translate-x-6' : 'translate-x-1'}`}></div>
-            </div>
-          </button>
-        </div>
-
         {/* User Profile */}
         <div className="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 relative">
           <button
@@ -105,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu, isDar
             <div className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-card-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animation-fade-in-up z-50">
               <div className="p-1">
                 <NavLink
-                  to="/settings"
+                  to="/settings/profile"
                   className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg w-full"
                   onClick={() => { setIsMenuOpen(false); closeMobileMenu(); }}
                 >

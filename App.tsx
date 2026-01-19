@@ -5,6 +5,7 @@ import { JournalModal } from './components/JournalModal';
 import { SignIn } from './components/SignIn';
 import { OnboardingFlow } from './components/Onboarding';
 import { JournalEntry } from './types';
+import { getAppSettings } from './utils/storage';
 import {
   Dashboard,
   MoodTrackerPage,
@@ -159,18 +160,24 @@ const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [entries, setEntries] = useState<JournalEntry[]>(INITIAL_ENTRIES);
   const [templates, setTemplates] = useState<Template[]>(INITIAL_TEMPLATES);
-  const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // Handle Dark Mode
+  // Apply Theme from Storage on Mount
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
+    const applyTheme = () => {
+      const settings = getAppSettings();
+      const root = window.document.documentElement;
+      root.classList.remove('light', 'dark');
 
-  const toggleTheme = () => setIsDarkMode(!isDarkMode);
+      let effectiveTheme = settings.theme;
+      if (effectiveTheme === 'system') {
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        effectiveTheme = systemDark ? 'dark' : 'light';
+      }
+      root.classList.add(effectiveTheme);
+    };
+
+    applyTheme();
+  }, []);
 
   const handleSaveEntry = (title: string, content: string) => {
     const newEntry: JournalEntry = {
@@ -235,8 +242,6 @@ const App: React.FC = () => {
         <Sidebar
           isOpen={isMobileMenuOpen}
           closeMobileMenu={() => setIsMobileMenuOpen(false)}
-          isDarkMode={isDarkMode}
-          toggleTheme={toggleTheme}
         />
 
         {/* Main Content */}
