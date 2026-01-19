@@ -140,6 +140,7 @@ const AudioNode = Node.create({
 });
 
 // --- Custom Mood Node ---
+// --- Custom Mood Node ---
 const MoodNode = Node.create({
     name: 'moodPicker',
     group: 'block',
@@ -168,23 +169,38 @@ const MoodNode = Node.create({
     addNodeView() {
         return ReactNodeViewRenderer(({ node, updateAttributes }) => {
             const selection = node.attrs.selection;
-            const colors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-lime-400', 'bg-emerald-400'];
-            const labels = ['Awful', 'Bad', 'Okay', 'Good', 'Great'];
+
+            // Exact match from DailyMoodTracker.tsx
+            const moods = [
+                { value: 1, label: 'Distressed', icon: 'thunderstorm', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-400', ring: 'ring-rose-400' },
+                { value: 2, label: 'Low', icon: 'rainy', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-400', ring: 'ring-blue-400' },
+                { value: 3, label: 'Neutral', icon: 'sentiment_neutral', color: 'text-gray-500', bg: 'bg-gray-50 dark:bg-gray-700', border: 'border-gray-400', ring: 'ring-gray-400' },
+                { value: 4, label: 'Content', icon: 'sentiment_satisfied', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-400', ring: 'ring-emerald-400' },
+                { value: 5, label: 'Radiant', icon: 'sunny', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-400', ring: 'ring-amber-400' },
+            ];
 
             return (
-                <NodeViewWrapper className="my-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col gap-2 items-center justify-center select-none data-[selected=true]:border-primary transition-colors">
-                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">How are you feeling?</span>
-                    <div className="flex gap-3">
-                        {colors.map((color, index) => {
-                            const value = index + 1;
-                            const isSelected = selection === value;
+                <NodeViewWrapper className="my-6 p-6 bg-white dark:bg-card-dark rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col gap-4 items-center justify-center select-none data-[selected=true]:ring-2 ring-primary/20 transition-all">
+                    <div className="flex flex-wrap justify-center gap-4">
+                        {moods.map((mood) => {
+                            const isSelected = selection === mood.value;
                             return (
                                 <button
-                                    key={value}
-                                    onClick={() => updateAttributes({ selection: value })}
-                                    className={`w-10 h-10 rounded-full transition-all duration-200 ${color} ${isSelected ? 'ring-4 ring-white dark:ring-[#191919] scale-110 shadow-lg' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
-                                    title={labels[index]}
-                                />
+                                    key={mood.value}
+                                    onClick={() => updateAttributes({ selection: mood.value })}
+                                    className={`group flex flex-col items-center gap-2 transition-transform hover:-translate-y-1 focus:outline-none`}
+                                    title={mood.label}
+                                >
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border-2
+                                        ${mood.bg} 
+                                        ${isSelected ? `${mood.border} ring-2 ring-offset-2 ${mood.ring} dark:ring-offset-card-dark scale-110 shadow-md` : 'border-transparent opacity-70 hover:opacity-100'} 
+                                    `}>
+                                        <span className={`material-symbols-outlined text-2xl ${mood.color}`}>{mood.icon}</span>
+                                    </div>
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider transition-colors ${isSelected ? 'text-gray-900 dark:text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+                                        {mood.label}
+                                    </span>
+                                </button>
                             );
                         })}
                     </div>

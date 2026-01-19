@@ -251,8 +251,18 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
                         className="w-full bg-transparent border-none p-0 text-base font-medium text-gray-700 dark:text-gray-300 placeholder-gray-300 focus:ring-0 focus:bg-gray-100 dark:focus:bg-gray-800 px-2 -mx-2 rounded"
                         placeholder="Mood tracker title..."
                       />
-                      <div className="mt-2 flex gap-3 opacity-50 pointer-events-none grayscale-[0.5]">
-                        {[1, 2, 3, 4, 5].map(i => <div key={i} className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700"></div>)}
+                      <div className="mt-3 flex gap-4 opacity-70 pointer-events-none grayscale-[0.3]">
+                        {[
+                          { icon: 'thunderstorm', color: 'text-rose-500', bg: 'bg-rose-50' },
+                          { icon: 'rainy', color: 'text-blue-500', bg: 'bg-blue-50' },
+                          { icon: 'sentiment_neutral', color: 'text-gray-500', bg: 'bg-gray-50' },
+                          { icon: 'sentiment_satisfied', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                          { icon: 'sunny', color: 'text-amber-500', bg: 'bg-amber-50' }
+                        ].map((m, i) => (
+                          <div key={i} className={`w-8 h-8 rounded-lg flex items-center justify-center ${m.bg}`}>
+                            <span className={`material-symbols-outlined text-lg ${m.color}`}>{m.icon}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
