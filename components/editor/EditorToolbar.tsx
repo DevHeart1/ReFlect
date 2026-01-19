@@ -72,7 +72,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     const toggleMediaMenu = () => setShowMediaMenu(!showMediaMenu);
 
     return (
-        <div className={`p-2 bg-white dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-20 transition-all duration-300 flex flex-nowrap items-center gap-1 overflow-x-auto no-scrollbar`}>
+        <div className={`p-2 bg-white dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-20 transition-all duration-300 flex flex-wrap items-center gap-1`}>
 
             {/* Collapse Toggle */}
             <button
