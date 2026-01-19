@@ -1,13 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SettingsSidebar } from '../components/SettingsSidebar';
+import { getAppSettings, saveAppSettings, DEFAULT_SETTINGS, AppSettings } from '../utils/storage';
 
 export const GeneralSettingsPage: React.FC = () => {
-    const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
-    const [language, setLanguage] = useState('English (US)');
-    const [timeZone, setTimeZone] = useState('(UTC-08:00) Pacific');
-    const [fontSize, setFontSize] = useState(2);
-    const [highContrast, setHighContrast] = useState(false);
-    const [screenReader, setScreenReader] = useState(false);
+    // Initialize state from storage
+    const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+
+    // Initial load
+    useEffect(() => {
+        setSettings(getAppSettings());
+    }, []);
+
+    // Apply theme side-effect
+    useEffect(() => {
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
+
+        let effectiveTheme = settings.theme;
+        if (effectiveTheme === 'system') {
+            const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            effectiveTheme = systemDark ? 'dark' : 'light';
+        }
+
+        root.classList.add(effectiveTheme);
+    }, [settings.theme]);
+
+    // Helper to update settings
+    const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+        const newSettings = { ...settings, [key]: value };
+        setSettings(newSettings);
+        saveAppSettings(newSettings);
+    };
+
+    const { theme, language, timeZone, fontSize, highContrast, screenReader } = settings;
 
     return (
         <div className="flex-1 flex overflow-hidden h-full bg-gray-50/50 dark:bg-background-dark animate-fade-in-up">
@@ -26,10 +51,10 @@ export const GeneralSettingsPage: React.FC = () => {
                         <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">Appearance</h3>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                             <button
-                                onClick={() => setTheme('light')}
+                                onClick={() => updateSetting('theme', 'light')}
                                 className={`flex flex-col gap-3 p-4 rounded-xl border text-left transition-all group ${theme === 'light'
-                                        ? 'ring-2 ring-primary border-primary bg-primary/5'
-                                        : 'border-gray-200 dark:border-gray-800 bg-card-light dark:bg-card-dark hover:border-primary/50'
+                                    ? 'ring-2 ring-primary border-primary bg-primary/5'
+                                    : 'border-gray-200 dark:border-gray-800 bg-card-light dark:bg-card-dark hover:border-primary/50'
                                     }`}
                             >
                                 <div className="aspect-video rounded-md bg-gray-100 border border-gray-200 flex items-center justify-center">
@@ -45,10 +70,10 @@ export const GeneralSettingsPage: React.FC = () => {
                             </button>
 
                             <button
-                                onClick={() => setTheme('dark')}
+                                onClick={() => updateSetting('theme', 'dark')}
                                 className={`flex flex-col gap-3 p-4 rounded-xl border text-left transition-all group ${theme === 'dark'
-                                        ? 'ring-2 ring-primary border-primary bg-primary/5'
-                                        : 'border-gray-200 dark:border-gray-800 bg-card-light dark:bg-card-dark hover:border-primary/50'
+                                    ? 'ring-2 ring-primary border-primary bg-primary/5'
+                                    : 'border-gray-200 dark:border-gray-800 bg-card-light dark:bg-card-dark hover:border-primary/50'
                                     }`}
                             >
                                 <div className="aspect-video rounded-md bg-background-dark border border-gray-700 flex items-center justify-center">
@@ -64,10 +89,10 @@ export const GeneralSettingsPage: React.FC = () => {
                             </button>
 
                             <button
-                                onClick={() => setTheme('system')}
+                                onClick={() => updateSetting('theme', 'system')}
                                 className={`flex flex-col gap-3 p-4 rounded-xl border text-left transition-all group ${theme === 'system'
-                                        ? 'ring-2 ring-primary border-primary bg-primary/5'
-                                        : 'border-gray-200 dark:border-gray-800 bg-card-light dark:bg-card-dark hover:border-primary/50'
+                                    ? 'ring-2 ring-primary border-primary bg-primary/5'
+                                    : 'border-gray-200 dark:border-gray-800 bg-card-light dark:bg-card-dark hover:border-primary/50'
                                     }`}
                             >
                                 <div className="aspect-video rounded-md bg-gradient-to-br from-gray-100 to-background-dark border border-gray-200 flex items-center justify-center overflow-hidden">
@@ -94,7 +119,7 @@ export const GeneralSettingsPage: React.FC = () => {
                                 </div>
                                 <select
                                     value={language}
-                                    onChange={(e) => setLanguage(e.target.value)}
+                                    onChange={(e) => updateSetting('language', e.target.value)}
                                     className="min-w-[160px] bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-primary focus:border-primary px-3 py-2 outline-none"
                                 >
                                     <option>English (US)</option>
@@ -111,7 +136,7 @@ export const GeneralSettingsPage: React.FC = () => {
                                 </div>
                                 <select
                                     value={timeZone}
-                                    onChange={(e) => setTimeZone(e.target.value)}
+                                    onChange={(e) => updateSetting('timeZone', e.target.value)}
                                     className="min-w-[160px] bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-primary focus:border-primary px-3 py-2 outline-none"
                                 >
                                     <option>(UTC-08:00) Pacific</option>
@@ -140,7 +165,7 @@ export const GeneralSettingsPage: React.FC = () => {
                                         step="1"
                                         type="range"
                                         value={fontSize}
-                                        onChange={(e) => setFontSize(parseInt(e.target.value))}
+                                        onChange={(e) => updateSetting('fontSize', parseInt(e.target.value))}
                                     />
                                     <span className="text-lg text-gray-900 dark:text-white">A</span>
                                 </div>
@@ -156,7 +181,7 @@ export const GeneralSettingsPage: React.FC = () => {
                                             className="sr-only peer"
                                             type="checkbox"
                                             checked={highContrast}
-                                            onChange={() => setHighContrast(!highContrast)}
+                                            onChange={() => updateSetting('highContrast', !highContrast)}
                                         />
                                         <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:outline-none ring-0 peer-checked:bg-primary transition-colors"></div>
                                         <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform transform ${highContrast ? 'translate-x-5' : 'translate-x-0'}`}></div>
@@ -174,7 +199,7 @@ export const GeneralSettingsPage: React.FC = () => {
                                             className="sr-only peer"
                                             type="checkbox"
                                             checked={screenReader}
-                                            onChange={() => setScreenReader(!screenReader)}
+                                            onChange={() => updateSetting('screenReader', !screenReader)}
                                         />
                                         <div className="w-11 h-6 bg-gray-200 dark:bg-gray-700 rounded-full peer peer-focus:outline-none ring-0 peer-checked:bg-primary transition-colors"></div>
                                         <div className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full transition-transform transform ${screenReader ? 'translate-x-5' : 'translate-x-0'}`}></div>

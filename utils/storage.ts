@@ -64,3 +64,66 @@ export const getJournalEntries = (): JournalEntry[] => {
         return [];
     }
 };
+
+// --- Settings & Profile ---
+
+export interface AppSettings {
+    theme: 'light' | 'dark' | 'system';
+    language: string;
+    timeZone: string;
+    fontSize: number;
+    highContrast: boolean;
+    screenReader: boolean;
+}
+
+export interface UserProfile {
+    name: string;
+    email: string;
+    avatarUrl: string;
+    isPro: boolean;
+}
+
+const SETTINGS_KEY = 'reflect_app_settings';
+const PROFILE_KEY = 'reflect_user_profile';
+
+export const DEFAULT_SETTINGS: AppSettings = {
+    theme: 'system',
+    language: 'English (US)',
+    timeZone: '(UTC-08:00) Pacific',
+    fontSize: 2,
+    highContrast: false,
+    screenReader: false
+};
+
+export const DEFAULT_PROFILE: UserProfile = {
+    name: 'Alex Morgan',
+    email: 'alex.morgan@example.com',
+    avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg',
+    isPro: true
+};
+
+export const getAppSettings = (): AppSettings => {
+    try {
+        const data = localStorage.getItem(SETTINGS_KEY);
+        return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
+    } catch (e) {
+        return DEFAULT_SETTINGS;
+    }
+};
+
+export const saveAppSettings = (settings: AppSettings) => {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+};
+
+export const getUserProfile = (): UserProfile => {
+    try {
+        const data = localStorage.getItem(PROFILE_KEY);
+        return data ? { ...DEFAULT_PROFILE, ...JSON.parse(data) } : DEFAULT_PROFILE;
+    } catch (e) {
+        return DEFAULT_PROFILE;
+    }
+};
+
+export const saveUserProfile = (profile: UserProfile) => {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+};

@@ -1,7 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { SettingsSidebar } from '../components/SettingsSidebar';
+import { getUserProfile, saveUserProfile, UserProfile, DEFAULT_PROFILE } from '../utils/storage';
 
 export const ProfileSettingsPage: React.FC = () => {
+    const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+    const [isEditing, setIsEditing] = useState(false);
+
+    // Form State
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+
+    useEffect(() => {
+        const data = getUserProfile();
+        setProfile(data);
+        setName(data.name);
+        setEmail(data.email);
+    }, []);
+
+    const handleSave = () => {
+        const updated = { ...profile, name, email };
+        setProfile(updated);
+        saveUserProfile(updated);
+        setIsEditing(false);
+    };
+
+    const handleCancel = () => {
+        setName(profile.name);
+        setEmail(profile.email);
+        setIsEditing(false);
+    };
+
     return (
         <div className="flex-1 flex overflow-hidden h-full bg-gray-50/50 dark:bg-background-dark animate-fade-in-up">
             <SettingsSidebar />
@@ -10,24 +38,47 @@ export const ProfileSettingsPage: React.FC = () => {
             <div className="flex-1 overflow-y-auto p-6 lg:p-10">
                 <div className="max-w-3xl mx-auto space-y-8">
 
+                    {/* Profile Header */}
                     <div className="flex flex-col md:flex-row md:items-center gap-6">
                         <div className="relative group">
                             <div
                                 className="h-24 w-24 rounded-2xl bg-center bg-cover border-4 border-white dark:border-gray-800 shadow-soft"
-                                style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg')" }}
+                                style={{ backgroundImage: `url('${profile.avatarUrl}')` }}
                             ></div>
                             <button className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-700 p-2 rounded-full shadow-lg border border-gray-100 dark:border-gray-600 text-primary dark:text-white hover:scale-110 transition-transform">
                                 <span className="material-symbols-outlined text-sm">edit</span>
                             </button>
                         </div>
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                                <h2 className="text-3xl font-black tracking-tight text-[#131516] dark:text-white">Alex Morgan</h2>
-                                <button className="text-gray-400 hover:text-primary transition-colors">
-                                    <span className="material-symbols-outlined text-xl">edit</span>
-                                </button>
+                        <div className="space-y-1 flex-1">
+                            <div className="flex items-center justify-between gap-3">
+                                {isEditing ? (
+                                    <input
+                                        type="text"
+                                        value={name}
+                                        onChange={e => setName(e.target.value)}
+                                        className="text-3xl font-black tracking-tight text-[#131516] dark:text-white bg-transparent border-b-2 border-primary outline-none max-w-sm"
+                                    />
+                                ) : (
+                                    <h2 className="text-3xl font-black tracking-tight text-[#131516] dark:text-white">{profile.name}</h2>
+                                )}
+
+                                {!isEditing && (
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="text-gray-400 hover:text-primary transition-colors"
+                                    >
+                                        <span className="material-symbols-outlined text-xl">edit</span>
+                                    </button>
+                                )}
                             </div>
                             <p className="text-gray-500 dark:text-gray-400">Manage your public identity and account preferences.</p>
+
+                            {isEditing && (
+                                <div className="flex gap-2 mt-2">
+                                    <button onClick={handleSave} className="bg-primary text-white text-xs px-3 py-1.5 rounded-md font-bold hover:bg-primary/90">Save Changes</button>
+                                    <button onClick={handleCancel} className="bg-gray-200 text-gray-700 text-xs px-3 py-1.5 rounded-md font-bold hover:bg-gray-300">Cancel</button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -35,9 +86,18 @@ export const ProfileSettingsPage: React.FC = () => {
                         <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">Account Information</h3>
                         <div className="bg-card-light dark:bg-card-dark rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
                             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                <div className="space-y-1">
+                                <div className="space-y-1 flex-1">
                                     <h4 className="font-bold text-gray-900 dark:text-white">Email Address</h4>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">alex.morgan@example.com</p>
+                                    {isEditing ? (
+                                        <input
+                                            type="email"
+                                            value={email}
+                                            onChange={e => setEmail(e.target.value)}
+                                            className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-700 rounded px-2 py-1 w-full max-w-xs"
+                                        />
+                                    ) : (
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">{profile.email}</p>
+                                    )}
                                 </div>
                                 <button className="text-sm font-bold text-primary hover:underline">Change Email</button>
                             </div>
@@ -74,9 +134,11 @@ export const ProfileSettingsPage: React.FC = () => {
                         </div>
                     </section>
 
+                    {/* ... Linked Accounts Section ... */}
                     <section className="space-y-4">
                         <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest px-1">Linked Accounts</h3>
                         <div className="bg-card-light dark:bg-card-dark rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
+                            {/* Static visualization for now */}
                             <div className="p-6 flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 flex items-center justify-center bg-gray-50 dark:bg-white/5 rounded-lg">
