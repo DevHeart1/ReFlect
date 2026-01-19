@@ -139,6 +139,61 @@ const AudioNode = Node.create({
     },
 });
 
+// --- Custom Mood Node ---
+const MoodNode = Node.create({
+    name: 'moodPicker',
+    group: 'block',
+    atom: true,
+
+    addAttributes() {
+        return {
+            selection: {
+                default: 0,
+            },
+        }
+    },
+
+    parseHTML() {
+        return [
+            {
+                tag: 'mood-picker',
+            },
+        ]
+    },
+
+    renderHTML({ HTMLAttributes }) {
+        return ['mood-picker', mergeAttributes(HTMLAttributes)]
+    },
+
+    addNodeView() {
+        return ReactNodeViewRenderer(({ node, updateAttributes }) => {
+            const selection = node.attrs.selection;
+            const colors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-lime-400', 'bg-emerald-400'];
+            const labels = ['Awful', 'Bad', 'Okay', 'Good', 'Great'];
+
+            return (
+                <NodeViewWrapper className="my-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-dashed border-gray-200 dark:border-gray-700 flex flex-col gap-2 items-center justify-center select-none data-[selected=true]:border-primary transition-colors">
+                    <span className="text-xs font-bold uppercase tracking-wider text-gray-400">How are you feeling?</span>
+                    <div className="flex gap-3">
+                        {colors.map((color, index) => {
+                            const value = index + 1;
+                            const isSelected = selection === value;
+                            return (
+                                <button
+                                    key={value}
+                                    onClick={() => updateAttributes({ selection: value })}
+                                    className={`w-10 h-10 rounded-full transition-all duration-200 ${color} ${isSelected ? 'ring-4 ring-white dark:ring-[#191919] scale-110 shadow-lg' : 'opacity-40 hover:opacity-100 hover:scale-105'}`}
+                                    title={labels[index]}
+                                />
+                            );
+                        })}
+                    </div>
+                </NodeViewWrapper>
+            )
+        })
+    },
+});
+
 interface RichTextEditorProps {
     content: string;
     onUpdate: (content: string) => void;
@@ -176,6 +231,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             }),
             AudioNode,
             VideoNode,
+            MoodNode,
             Placeholder.configure({
                 placeholder,
             }),

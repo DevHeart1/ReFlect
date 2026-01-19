@@ -38,7 +38,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
             case 'question':
               return `<h3>${block.title}</h3><p></p>`;
             case 'mood':
-              return `<h3>${block.title}</h3><p><em>(Mood log placeholder)</em></p>`;
+              return `<h3>${block.title}</h3><mood-picker></mood-picker><p></p>`;
             case 'checklist':
               const items = block.items?.map(item => `<li>${item}</li>`).join('') || '';
               return `<h3>${block.title}</h3><ul>${items}</ul>`;
