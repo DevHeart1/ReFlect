@@ -8,6 +8,7 @@ export interface JournalEntry {
   mood?: string;
   icon: string;
   colorClass: string;
+  content: string;
 }
 
 export interface MoodData {

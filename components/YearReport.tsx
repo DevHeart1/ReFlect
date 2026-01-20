@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Dialog } from './Dialog';
+import { exportToJSON, exportToPDF } from '../utils/export';
 
 export const YearReport: React.FC = () => {
+  const [showExportDialog, setShowExportDialog] = useState(false);
+
   return (
     <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8 animate-fade-in-up">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[#CCAB48]/20 pb-8">
@@ -141,7 +145,7 @@ export const YearReport: React.FC = () => {
                 <span className="text-[10px] font-bold uppercase text-[#CCAB48] mb-1">May</span>
                 <div className="grid grid-cols-4 gap-1">
                   {Array.from({ length: 31 }).map((_, i) => (
-                      <div key={i} className={`aspect-square rounded-[2px] ${i % 2 === 0 ? 'bg-primary' : 'bg-primary/80'}`}></div>
+                    <div key={i} className={`aspect-square rounded-[2px] ${i % 2 === 0 ? 'bg-primary' : 'bg-primary/80'}`}></div>
                   ))}
                 </div>
               </div>
@@ -174,9 +178,12 @@ export const YearReport: React.FC = () => {
       <div className="flex flex-col items-center justify-center pt-8 pb-12 gap-6">
         <p className="text-gray-500 font-medium">Ready to start your journey for 2024?</p>
         <div className="flex gap-4">
-          <button className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30">
+          <button
+            onClick={() => setShowExportDialog(true)}
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30"
+          >
             <span className="material-symbols-outlined">download</span>
-            Export PDF Report
+            Export Annual Report
           </button>
           <button className="flex items-center gap-2 bg-white dark:bg-card-dark border border-[#CCAB48] text-[#CCAB48] hover:bg-[#CCAB48] hover:text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-glow">
             <span className="material-symbols-outlined">share</span>
@@ -184,6 +191,54 @@ export const YearReport: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <Dialog
+        isOpen={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+        title="Select Export Format"
+        footer={
+          <button
+            onClick={() => setShowExportDialog(false)}
+            className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg"
+          >
+            Cancel
+          </button>
+        }
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => {
+              exportToJSON();
+              setShowExportDialog(false);
+            }}
+            className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">data_object</span>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-gray-900 dark:text-white">JSON</div>
+              <div className="text-xs text-gray-500">Machine readable backup</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              exportToPDF();
+              setShowExportDialog(false);
+            }}
+            className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">picture_as_pdf</span>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-gray-900 dark:text-white">PDF</div>
+              <div className="text-xs text-gray-500">Document format</div>
+            </div>
+          </button>
+        </div>
+      </Dialog>
     </div>
   );
 };

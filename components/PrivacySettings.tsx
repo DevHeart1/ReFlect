@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { getAppSettings, saveAppSettings, getJournalEntries, getMoodCheckins, getUserProfile, AppSettings } from '../utils/storage';
+import { getAppSettings, saveAppSettings, AppSettings } from '../utils/storage';
+import { exportToJSON, exportToPDF } from '../utils/export';
+import { Dialog } from './Dialog';
 
 export const PrivacySettings: React.FC = () => {
   // Initialize state from storage
   const [settings, setSettings] = useState<AppSettings>(() => getAppSettings());
+  const [showExportDialog, setShowExportDialog] = useState(false);
 
   // Helper to update settings
   const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
@@ -14,27 +17,6 @@ export const PrivacySettings: React.FC = () => {
 
   // Destructure for easier access
   const { biometricEnabled, autoLockTimer, aiPersonalization, anonymousData } = settings;
-
-  // Export Data Handler
-  const handleExportData = () => {
-    const data = {
-      profile: getUserProfile(),
-      settings: getAppSettings(),
-      journalEntries: getJournalEntries(),
-      moodCheckins: getMoodCheckins(),
-      exportDate: new Date().toISOString(),
-    };
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `reflect-data-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-10 animate-fade-in-up">
@@ -159,7 +141,7 @@ export const PrivacySettings: React.FC = () => {
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Export all your thoughts and data in PDF or JSON format for your own records.</p>
               </div>
               <button
-                onClick={handleExportData}
+                onClick={() => setShowExportDialog(true)}
                 className="flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 px-5 py-2.5 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors whitespace-nowrap shadow-sm"
               >
                 <span className="material-symbols-outlined text-[20px]">download</span>
@@ -179,6 +161,54 @@ export const PrivacySettings: React.FC = () => {
         </div>
 
       </div>
+
+      <Dialog
+        isOpen={showExportDialog}
+        onClose={() => setShowExportDialog(false)}
+        title="Select Export Format"
+        footer={
+          <button
+            onClick={() => setShowExportDialog(false)}
+            className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg"
+          >
+            Cancel
+          </button>
+        }
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={() => {
+              exportToJSON();
+              setShowExportDialog(false);
+            }}
+            className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">data_object</span>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-gray-900 dark:text-white">JSON</div>
+              <div className="text-xs text-gray-500">Machine readable backup</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => {
+              exportToPDF();
+              setShowExportDialog(false);
+            }}
+            className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+          >
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <span className="material-symbols-outlined">picture_as_pdf</span>
+            </div>
+            <div className="text-center">
+              <div className="font-bold text-gray-900 dark:text-white">PDF</div>
+              <div className="text-xs text-gray-500">Document format</div>
+            </div>
+          </button>
+        </div>
+      </Dialog>
     </div>
   );
 };

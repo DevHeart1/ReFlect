@@ -1,44 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { Dialog } from '../components/Dialog';
 import {
-    getAppSettings,
-    getJournalEntries,
-    getMoodCheckins,
-    getUserProfile,
-    clearUserSession,
-    saveAppSettings,
-    saveUserProfile
+    clearUserSession
 } from '../utils/storage';
+import { exportToJSON, exportToPDF } from '../utils/export';
 
 export const DataManagementPage: React.FC = () => {
-    // State for Delete Dialog
+    // State for Dialogs
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [showExportDialog, setShowExportDialog] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
 
     // File Input Ref
     const fileInputRef = useRef<HTMLInputElement>(null);
-
-    // --- Export ---
-    const handleExport = () => {
-        const data = {
-            profile: getUserProfile(),
-            settings: getAppSettings(),
-            journalEntries: getJournalEntries(),
-            moodCheckins: getMoodCheckins(),
-            exportDate: new Date().toISOString(),
-        };
-
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `reflect-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    };
 
     // --- Import ---
     const triggerImport = () => {
@@ -143,7 +118,7 @@ export const DataManagementPage: React.FC = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Download a complete backup of your journal.</p>
                             </div>
                             <button
-                                onClick={handleExport}
+                                onClick={() => setShowExportDialog(true)}
                                 className="bg-primary text-white px-5 py-2.5 rounded-lg text-sm font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
                             >
                                 <span className="material-symbols-outlined text-[18px]">backup</span>
@@ -182,7 +157,7 @@ export const DataManagementPage: React.FC = () => {
                                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Download all your records in JSON format.</p>
                             </div>
                             <button
-                                onClick={handleExport}
+                                onClick={() => setShowExportDialog(true)}
                                 className="flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 px-5 py-2.5 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors"
                             >
                                 <span className="material-symbols-outlined text-[20px]">download</span>
@@ -280,6 +255,54 @@ export const DataManagementPage: React.FC = () => {
                 ) : (
                     <p>Your data has been successfully restored. The application will now reload to apply changes.</p>
                 )}
+            </Dialog>
+
+            <Dialog
+                isOpen={showExportDialog}
+                onClose={() => setShowExportDialog(false)}
+                title="Select Export Format"
+                footer={
+                    <button
+                        onClick={() => setShowExportDialog(false)}
+                        className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg"
+                    >
+                        Cancel
+                    </button>
+                }
+            >
+                <div className="grid grid-cols-2 gap-4">
+                    <button
+                        onClick={() => {
+                            exportToJSON();
+                            setShowExportDialog(false);
+                        }}
+                        className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+                    >
+                        <div className="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900/20 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined">data_object</span>
+                        </div>
+                        <div className="text-center">
+                            <div className="font-bold text-gray-900 dark:text-white">JSON</div>
+                            <div className="text-xs text-gray-500">Machine readable backup</div>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => {
+                            exportToPDF();
+                            setShowExportDialog(false);
+                        }}
+                        className="flex flex-col items-center gap-3 p-4 rounded-xl border border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors group"
+                    >
+                        <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/20 text-red-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span className="material-symbols-outlined">picture_as_pdf</span>
+                        </div>
+                        <div className="text-center">
+                            <div className="font-bold text-gray-900 dark:text-white">PDF</div>
+                            <div className="text-xs text-gray-500">Document format</div>
+                        </div>
+                    </button>
+                </div>
             </Dialog>
 
         </div>
