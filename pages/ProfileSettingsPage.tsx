@@ -9,16 +9,19 @@ export const ProfileSettingsPage: React.FC = () => {
     // Form State
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [avatarUrl, setAvatarUrl] = useState('');
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const data = getUserProfile();
         setProfile(data);
         setName(data.name);
         setEmail(data.email);
+        setAvatarUrl(data.avatarUrl);
     }, []);
 
     const handleSave = () => {
-        const updated = { ...profile, name, email };
+        const updated = { ...profile, name, email, avatarUrl };
         setProfile(updated);
         saveUserProfile(updated);
         setIsEditing(false);
@@ -27,7 +30,24 @@ export const ProfileSettingsPage: React.FC = () => {
     const handleCancel = () => {
         setName(profile.name);
         setEmail(profile.email);
+        setAvatarUrl(profile.avatarUrl);
         setIsEditing(false);
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const result = reader.result as string;
+                setAvatarUrl(result);
+                // Auto-save or wait for explicit save? 
+                // Currently only updates state, user must click Save Changes if isEditing.
+                // If not in editing mode, we might want to auto-enable editing or just let them save.
+                if (!isEditing) setIsEditing(true);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleResetPassword = () => {
@@ -48,9 +68,19 @@ export const ProfileSettingsPage: React.FC = () => {
                         <div className="relative group">
                             <div
                                 className="h-24 w-24 rounded-2xl bg-center bg-cover border-4 border-white dark:border-gray-800 shadow-soft"
-                                style={{ backgroundImage: `url('${profile.avatarUrl}')` }}
+                                style={{ backgroundImage: `url('${avatarUrl}')` }}
                             ></div>
-                            <button className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-700 p-2 rounded-full shadow-lg border border-gray-100 dark:border-gray-600 text-primary dark:text-white hover:scale-110 transition-transform">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleFileChange}
+                            />
+                            <button
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute -bottom-2 -right-2 bg-white dark:bg-gray-700 p-2 rounded-full shadow-lg border border-gray-100 dark:border-gray-600 text-primary dark:text-white hover:scale-110 transition-transform"
+                            >
                                 <span className="material-symbols-outlined text-sm">edit</span>
                             </button>
                         </div>
