@@ -31,6 +31,7 @@ const INITIAL_ENTRIES: JournalEntry[] = [
     id: '1',
     title: 'Evening Reflection',
     excerpt: 'Felt a bit overwhelmed today with work, but taking a walk helped clear my mind significantly...',
+    content: '<p>Felt a bit overwhelmed today with work, but taking a walk helped clear my mind significantly. I need to remember to take breaks earlier in the day.</p>',
     date: 'Yesterday, 8:30 PM',
     tags: ['Journal', 'Tired'],
     type: 'journal',
@@ -42,6 +43,7 @@ const INITIAL_ENTRIES: JournalEntry[] = [
     id: '2',
     title: 'Morning Intentions',
     excerpt: 'Woke up feeling refreshed. Today I want to focus on being present during meetings and avoiding multitasking.',
+    content: '<p>Woke up feeling refreshed. Today I want to focus on being present during meetings and avoiding multitasking. <strong>Focus works wonders.</strong></p>',
     date: 'Oct 22, 7:15 AM',
     tags: ['Journal', 'Optimistic'],
     type: 'journal',
@@ -184,7 +186,8 @@ const App: React.FC = () => {
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
       title: title,
-      excerpt: content,
+      excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...', // Create plain text excerpt from HTML
+      content: content,
       date: 'Just now',
       tags: ['Journal', 'Reflective'],
       type: 'journal',
