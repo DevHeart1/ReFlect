@@ -59,57 +59,139 @@ export const YearReport: React.FC = () => {
         </section>
 
         {/* Sentiment Distribution */}
-        <section className="lg:col-span-4 bg-white dark:bg-card-dark rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-soft flex flex-col items-center">
-          <h3 className="text-lg font-bold mb-8 w-full text-gray-900 dark:text-white">Sentiment Distribution</h3>
+        <section className="lg:col-span-4 bg-white dark:bg-card-dark rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-soft flex flex-col items-center justify-between">
+          <h3 className="text-lg font-bold mb-4 w-full text-gray-900 dark:text-white">Sentiment Distribution</h3>
 
-          {/* Simple Bar Chart for Distribution */}
-          <div className="w-full space-y-4">
-            {stats.distribution.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center">No mood data available yet.</p>
+          <div className="relative w-48 h-48 my-4">
+            {stats.distribution.length > 0 ? (
+              <svg viewBox="0 0 100 100" className="w-full h-full transform -rotate-90">
+                {(() => {
+                  let cumulativePercent = 0;
+                  return stats.distribution.sort((a, b) => b.count - a.count).map((item, i) => {
+                    const percent = item.count / stats.total;
+                    const startX = Math.cos(2 * Math.PI * cumulativePercent);
+                    const startY = Math.sin(2 * Math.PI * cumulativePercent);
+                    cumulativePercent += percent;
+                    const endX = Math.cos(2 * Math.PI * cumulativePercent);
+                    const endY = Math.sin(2 * Math.PI * cumulativePercent);
+
+                    // Handle single item case (100% circle)
+                    if (stats.distribution.length === 1) {
+                      return <circle key={i} cx="50" cy="50" r="50" fill={
+                        item.mood === 'Radiant' ? '#f59e0b' :
+                          item.mood === 'Content' ? '#10b981' :
+                            item.mood === 'Neutral' ? '#94a3b8' :
+                              item.mood === 'Low' ? '#3b82f6' : '#e11d48'
+                      } />;
+                    }
+
+                    const largeArcFlag = percent > 0.5 ? 1 : 0;
+                    const pathData = `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
+
+                    return (
+                      <path
+                        key={i}
+                        d={pathData}
+                        fill={
+                          item.mood === 'Radiant' ? '#f59e0b' :
+                            item.mood === 'Content' ? '#10b981' :
+                              item.mood === 'Neutral' ? '#94a3b8' :
+                                item.mood === 'Low' ? '#3b82f6' : '#e11d48'
+                        }
+                        transform="translate(50, 50) scale(50)"
+                        className="hover:opacity-90 transition-opacity"
+                      />
+                    );
+                  });
+                })()}
+              </svg>
             ) : (
-              stats.distribution.sort((a, b) => b.count - a.count).slice(0, 5).map((item) => (
-                <div key={item.mood} className="space-y-1">
-                  <div className="flex justify-between text-xs font-bold uppercase text-gray-500">
-                    <span>{item.mood}</span>
-                    <span>{Math.round((item.count / stats.total) * 100)}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full"
-                      style={{ width: `${(item.count / stats.total) * 100}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))
+              <div className="w-full h-full rounded-full border-4 border-gray-100 dark:border-gray-800 flex items-center justify-center text-gray-300">
+                No Data
+              </div>
             )}
+
+            {/* Center overlay for donut look (optional, but looks premium) */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="w-24 h-24 bg-white dark:bg-card-dark rounded-full flex flex-col items-center justify-center shadow-sm">
+                <span className="text-2xl font-black text-gray-900 dark:text-white">{stats.distribution.length > 0 ? Math.round((stats.distribution.sort((a, b) => b.count - a.count)[0].count / stats.total) * 100) + '%' : '0%'}</span>
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter max-w-[60px] truncate text-center">
+                  {stats.distribution.length > 0 ? stats.distribution.sort((a, b) => b.count - a.count)[0].mood : 'Empty'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="w-full space-y-2">
+            {stats.distribution.sort((a, b) => b.count - a.count).slice(0, 3).map((item) => (
+              <div key={item.mood} className="flex items-center justify-between text-gray-700 dark:text-gray-300">
+                <div className="flex items-center gap-2">
+                  <div className={`w-3 h-3 rounded-full ${item.mood === 'Radiant' ? 'bg-amber-500' :
+                      item.mood === 'Content' ? 'bg-emerald-500' :
+                        item.mood === 'Neutral' ? 'bg-slate-400' :
+                          item.mood === 'Low' ? 'bg-blue-500' : 'bg-rose-500'
+                    }`}></div>
+                  <span className="text-sm font-medium">{item.mood}</span>
+                </div>
+                <span className="text-sm font-bold">{Math.round((item.count / stats.total) * 100)}%</span>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* Mood Heatmap (Simplified to Recent History) */}
+        {/* Mood Heatmap */}
         <section className="lg:col-span-12 bg-white dark:bg-card-dark rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-soft">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recent Mood History</h3>
-              <p className="text-sm text-gray-500">Your latest check-ins</p>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Mood Heatmap</h3>
+              <p className="text-sm text-gray-500">Emotional frequency across the year</p>
+            </div>
+            <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
+              <span>Less</span>
+              <div className="flex gap-1">
+                <div className="w-3 h-3 bg-gray-100 dark:bg-white/5 rounded-[1px]"></div>
+                <div className="w-3 h-3 bg-primary/40 rounded-[1px]"></div>
+                <div className="w-3 h-3 bg-primary rounded-[1px]"></div>
+              </div>
+              <span>More</span>
             </div>
           </div>
 
-          {stats.heatmap.length === 0 ? (
-            <p className="text-gray-500 italic">Start tracking your mood to see your history here.</p>
-          ) : (
-            <div className="flex flex-wrap gap-1">
-              {stats.heatmap.slice(0, 365).map((entry, i) => (
-                <div
-                  key={i}
-                  title={`${new Date(entry.date).toLocaleDateString()} - Intensity: ${entry.intensity}`}
-                  className={`w-3 h-3 rounded-[1px] ${entry.intensity >= 4 ? 'bg-green-500' :
-                      entry.intensity === 3 ? 'bg-gray-300' :
-                        'bg-red-400'
-                    }`}
-                ></div>
-              ))}
+          <div className="overflow-x-auto pb-4 custom-scrollbar">
+            <div className="min-w-[800px] grid grid-cols-12 gap-4">
+              {Array.from({ length: 12 }).map((_, monthIndex) => {
+                const date = new Date(new Date().getFullYear(), monthIndex, 1);
+                const monthName = date.toLocaleString('default', { month: 'short' });
+                const daysInMonth = new Date(new Date().getFullYear(), monthIndex + 1, 0).getDate();
+
+                return (
+                  <div key={monthName} className="flex flex-col gap-2">
+                    <span className="text-[10px] font-bold uppercase text-gray-400 mb-1">{monthName}</span>
+                    <div className="grid grid-cols-4 gap-1">
+                      {Array.from({ length: daysInMonth }).map((_, dayIndex) => {
+                        const currentDayStr = new Date(new Date().getFullYear(), monthIndex, dayIndex + 1).toDateString();
+                        const entry = stats.heatmap.find(h => new Date(h.date).toDateString() === currentDayStr);
+                        const intensity = entry ? entry.intensity : 0;
+
+                        return (
+                          <div
+                            key={dayIndex}
+                            className={`aspect-square rounded-[2px] transition-all hover:scale-125 hover:z-10 relative cursor-pointer ${intensity === 0 ? 'bg-gray-100 dark:bg-white/5' :
+                                intensity <= 2 ? 'bg-rose-400' :
+                                  intensity === 3 ? 'bg-gray-300 dark:bg-gray-600' : // Neutral
+                                    intensity === 4 ? 'bg-emerald-400' :
+                                      'bg-amber-400' // Radiant (5)
+                              }`}
+                            title={`${monthName} ${dayIndex + 1}: ${intensity > 0 ? intensity : 'No entry'}`}
+                          ></div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          )}
+          </div>
         </section>
 
         {/* Word Cloud */}
