@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Dialog } from './Dialog';
 
 export const DailyMoodTracker: React.FC = () => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -29,6 +30,20 @@ export const DailyMoodTracker: React.FC = () => {
 
   const toggleFactor = (factor: string) => {
     setSelectedFactors(prev => prev.includes(factor) ? prev.filter(f => f !== factor) : [...prev, factor]);
+  };
+
+  const handleClose = () => {
+    setSelectedMood(null);
+    // Optional: reset other states or keep them for next attempt provided we didn't save?
+    // Usually best to reset on explicit cancel, or keep on "pause".
+    // For now, let's keep them if user accidentally clicks outside, but reset on successful save.
+    // Actually, "onClose" usually implies cancelling the flow, so let's reset.
+    // But wait, what if they click outside by mistake? 
+    // Let's decide: Close = Cancel = Reset. 
+    // If we want to persist, we need separate logic. For simplicity, reset.
+    setSelectedTags([]);
+    setSelectedFactors([]);
+    setNote('');
   };
 
   return (
@@ -77,14 +92,46 @@ export const DailyMoodTracker: React.FC = () => {
             </div>
           </section>
 
-          {/* Details Section */}
-          <section className="bg-card-light dark:bg-card-dark rounded-3xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-8">
-            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">tune</span>
-              Mood Details
-            </h4>
+          {/* Details Dialog */}
+          <Dialog
+            isOpen={!!selectedMood}
+            onClose={handleClose}
+            title={`Log ${selectedMood} Status`}
+            footer={
+              <div className="flex gap-2 w-full justify-end">
+                <button
+                  onClick={handleClose}
+                  className="px-4 py-2 text-sm font-bold text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/5 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    if (!selectedMood) return;
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    import('../utils/storage').then(({ saveMoodCheckin, getMoodValue }) => {
+                      saveMoodCheckin({
+                        mood: selectedMood,
+                        moodValue: getMoodValue(selectedMood),
+                        secondaryEmotions: selectedTags,
+                        factors: selectedFactors,
+                        note
+                      });
+
+                      // Successful save - reset everything
+                      handleClose();
+                      alert('Mood check-in saved!');
+                    });
+                  }}
+                  className="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold shadow-lg shadow-primary/20 flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-sm">save</span>
+                  Save Entry
+                </button>
+              </div>
+            }
+          >
+            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
               {/* Secondary Emotions */}
               <div>
                 <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Secondary Emotions</label>
@@ -93,8 +140,8 @@ export const DailyMoodTracker: React.FC = () => {
                     <button
                       key={tag}
                       onClick={() => toggleTag(tag)}
-                      className={`px-4 py-2 rounded-lg border transition-all 
-                        ${selectedTags.includes(tag)
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-all 
+                          ${selectedTags.includes(tag)
                           ? 'bg-primary/10 border-primary text-primary font-medium'
                           : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-primary/50'
                         }`}
@@ -116,13 +163,13 @@ export const DailyMoodTracker: React.FC = () => {
                     <button
                       key={factor.label}
                       onClick={() => toggleFactor(factor.label)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border text-left group transition-colors
-                        ${selectedFactors.includes(factor.label)
+                      className={`flex items-center gap-2 p-3 rounded-xl border text-left group transition-colors
+                          ${selectedFactors.includes(factor.label)
                           ? 'border-primary bg-primary/5'
                           : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
                         }`}
                     >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${factor.color}`}>
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${factor.color}`}>
                         <span className="material-symbols-outlined text-lg">{factor.icon}</span>
                       </div>
                       <span className={`text-sm font-bold ${selectedFactors.includes(factor.label) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
@@ -135,50 +182,19 @@ export const DailyMoodTracker: React.FC = () => {
                   ))}
                 </div>
               </div>
+
+              {/* Note Area */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Quick Note</label>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-primary h-24 resize-none p-4 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 text-sm"
+                  placeholder="Add any thoughts..."
+                ></textarea>
+              </div>
             </div>
-
-            {/* Note Area */}
-            <div className="mt-8">
-              <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Quick Note</label>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-primary h-24 resize-none p-4 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 text-sm"
-                placeholder="Add any thoughts about your mood..."
-              ></textarea>
-            </div>
-
-            {/* Save Action */}
-            <div className="mt-8 flex justify-end">
-              <button
-                onClick={() => {
-                  if (!selectedMood) return;
-
-                  import('../utils/storage').then(({ saveMoodCheckin, getMoodValue }) => {
-                    saveMoodCheckin({
-                      mood: selectedMood,
-                      moodValue: getMoodValue(selectedMood),
-                      secondaryEmotions: selectedTags,
-                      factors: selectedFactors,
-                      note
-                    });
-
-                    // Reset form or show success feedback
-                    setSelectedMood(null);
-                    setSelectedTags([]);
-                    setSelectedFactors([]);
-                    setNote('');
-                    alert('Mood check-in saved!');
-                  });
-                }}
-                disabled={!selectedMood}
-                className={`px-8 py-3 rounded-xl font-bold shadow-lg transition-all transform flex items-center gap-2 ${selectedMood ? 'bg-primary hover:bg-primary/90 text-white hover:scale-105 active:scale-95 shadow-primary/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-              >
-                <span className="material-symbols-outlined">save</span>
-                Save Entry
-              </button>
-            </div>
-          </section>
+          </Dialog>
         </div>
 
         {/* Sidebar Column */}
