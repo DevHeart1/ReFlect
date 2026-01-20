@@ -273,9 +273,10 @@ const App: React.FC = () => {
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
 
               <Route path="/settings" element={<SettingsLayout />}>
-                <Route index element={<SettingsPage />} />
+                <Route index element={<Navigate to="general" replace />} />
                 <Route path="general" element={<GeneralSettingsPage />} />
                 <Route path="profile" element={<ProfileSettingsPage />} />
+                <Route path="privacy" element={<SettingsPage />} />
                 <Route path="data" element={<DataManagementPage />} />
                 <Route path="notifications" element={<NotificationSettingsPage />} />
               </Route>

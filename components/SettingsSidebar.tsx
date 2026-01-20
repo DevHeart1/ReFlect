@@ -35,8 +35,8 @@ export const SettingsSidebar: React.FC = () => {
                     </button>
 
                     <button
-                        onClick={() => navigate('/settings')}
-                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive('/settings')
+                        onClick={() => navigate('/settings/privacy')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${isActive('/settings/privacy')
                             ? 'font-semibold bg-primary/10 text-primary border-l-4 border-primary'
                             : 'font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
                             }`}
