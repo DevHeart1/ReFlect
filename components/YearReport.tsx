@@ -68,7 +68,7 @@ export const YearReport: React.FC = () => {
                 {(() => {
                   let cumulativePercent = 0;
                   return stats.distribution.sort((a, b) => b.count - a.count).map((item, i) => {
-                    const percent = item.count / stats.total;
+                    const percent = (stats.total > 0) ? (item.count / stats.total) : 0;
                     const startX = Math.cos(2 * Math.PI * cumulativePercent);
                     const startY = Math.sin(2 * Math.PI * cumulativePercent);
                     cumulativePercent += percent;
@@ -76,7 +76,7 @@ export const YearReport: React.FC = () => {
                     const endY = Math.sin(2 * Math.PI * cumulativePercent);
 
                     // Handle single item case (100% circle)
-                    if (stats.distribution.length === 1) {
+                    if (stats.distribution.length === 1 || percent > 0.999) {
                       return <circle key={i} cx="50" cy="50" r="50" fill={
                         item.mood === 'Radiant' ? '#f59e0b' :
                           item.mood === 'Content' ? '#10b981' :
@@ -86,6 +86,10 @@ export const YearReport: React.FC = () => {
                     }
 
                     const largeArcFlag = percent > 0.5 ? 1 : 0;
+
+                    // Guard against NaN
+                    if (isNaN(startX) || isNaN(startY) || isNaN(endX) || isNaN(endY)) return null;
+
                     const pathData = `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
 
                     return (
@@ -127,9 +131,9 @@ export const YearReport: React.FC = () => {
               <div key={item.mood} className="flex items-center justify-between text-gray-700 dark:text-gray-300">
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${item.mood === 'Radiant' ? 'bg-amber-500' :
-                      item.mood === 'Content' ? 'bg-emerald-500' :
-                        item.mood === 'Neutral' ? 'bg-slate-400' :
-                          item.mood === 'Low' ? 'bg-blue-500' : 'bg-rose-500'
+                    item.mood === 'Content' ? 'bg-emerald-500' :
+                      item.mood === 'Neutral' ? 'bg-slate-400' :
+                        item.mood === 'Low' ? 'bg-blue-500' : 'bg-rose-500'
                     }`}></div>
                   <span className="text-sm font-medium">{item.mood}</span>
                 </div>
@@ -177,10 +181,10 @@ export const YearReport: React.FC = () => {
                           <div
                             key={dayIndex}
                             className={`aspect-square rounded-[2px] transition-all hover:scale-125 hover:z-10 relative cursor-pointer ${intensity === 0 ? 'bg-gray-100 dark:bg-white/5' :
-                                intensity <= 2 ? 'bg-rose-400' :
-                                  intensity === 3 ? 'bg-gray-300 dark:bg-gray-600' : // Neutral
-                                    intensity === 4 ? 'bg-emerald-400' :
-                                      'bg-amber-400' // Radiant (5)
+                              intensity <= 2 ? 'bg-rose-400' :
+                                intensity === 3 ? 'bg-gray-300 dark:bg-gray-600' : // Neutral
+                                  intensity === 4 ? 'bg-emerald-400' :
+                                    'bg-amber-400' // Radiant (5)
                               }`}
                             title={`${monthName} ${dayIndex + 1}: ${intensity > 0 ? intensity : 'No entry'}`}
                           ></div>

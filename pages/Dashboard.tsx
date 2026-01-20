@@ -176,7 +176,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                                 <span className="text-sm text-gray-400 ml-2">Current State</span>
                             </div>
                             {/* Chart Area */}
-                            <div className="relative h-40 w-full mt-4 -ml-2">
+                            <div className="relative h-40 w-full mt-4 -ml-2 shrink-0">
                                 <MoodChart />
                             </div>
                             <div className="flex justify-between text-xs text-gray-400 font-medium mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">

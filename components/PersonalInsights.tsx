@@ -93,7 +93,7 @@ export const PersonalInsights: React.FC = () => {
     if (chartData.length === 0) return "";
 
     const stepX = width / (chartData.length - 1 || 1);
-    const getY = (val: number) => 220 - (val / 5) * 180;
+    const getY = (val: number) => 220 - ((val || 0) / 5) * 180;
 
     let path = `M0,${getY(chartData[0].moodValue)}`;
     chartData.forEach((d, i) => {
