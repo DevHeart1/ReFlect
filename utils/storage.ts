@@ -79,6 +79,12 @@ export interface AppSettings {
     autoLockTimer: string;
     aiPersonalization: boolean;
     anonymousData: boolean;
+    // Notifications
+    dailyReminders: boolean;
+    reminderTime: string;
+    aiAlerts: boolean;
+    emailSummaries: boolean;
+    systemNotifications: boolean;
 }
 
 export interface UserProfile {
@@ -101,7 +107,12 @@ export const DEFAULT_SETTINGS: AppSettings = {
     biometricEnabled: true,
     autoLockTimer: '15 Minutes',
     aiPersonalization: true,
-    anonymousData: false
+    anonymousData: false,
+    dailyReminders: true,
+    reminderTime: '20:00',
+    aiAlerts: true,
+    emailSummaries: false,
+    systemNotifications: true
 };
 
 export const DEFAULT_PROFILE: UserProfile = {

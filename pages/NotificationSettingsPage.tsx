@@ -1,12 +1,19 @@
 import React, { useState } from 'react';
-
+import { getAppSettings, saveAppSettings, AppSettings } from '../utils/storage';
 
 export const NotificationSettingsPage: React.FC = () => {
-    const [dailyReminders, setDailyReminders] = useState(true);
-    const [reminderTime, setReminderTime] = useState('20:00');
-    const [aiAlerts, setAiAlerts] = useState(true);
-    const [emailSummaries, setEmailSummaries] = useState(false);
-    const [systemNotifications, setSystemNotifications] = useState(true);
+    // Initialize state from storage
+    const [settings, setSettings] = useState<AppSettings>(() => getAppSettings());
+
+    // Helper to update settings
+    const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+        const newSettings = { ...settings, [key]: value };
+        setSettings(newSettings);
+        saveAppSettings(newSettings);
+    };
+
+    // Destructure for easier access
+    const { dailyReminders, reminderTime, aiAlerts, emailSummaries, systemNotifications } = settings;
 
     return (
         <div className="flex-1 overflow-y-auto p-6 lg:p-10 animate-fade-in-up">
@@ -29,7 +36,7 @@ export const NotificationSettingsPage: React.FC = () => {
                                     <label className="relative inline-flex items-center cursor-pointer">
                                         <input
                                             checked={dailyReminders}
-                                            onChange={() => setDailyReminders(!dailyReminders)}
+                                            onChange={(e) => updateSetting('dailyReminders', e.target.checked)}
                                             className="sr-only peer"
                                             type="checkbox"
                                         />
@@ -44,7 +51,7 @@ export const NotificationSettingsPage: React.FC = () => {
                                     className="bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-primary focus:border-primary px-3 py-1.5"
                                     type="time"
                                     value={reminderTime}
-                                    onChange={(e) => setReminderTime(e.target.value)}
+                                    onChange={(e) => updateSetting('reminderTime', e.target.value)}
                                     disabled={!dailyReminders}
                                 />
                             </div>
@@ -67,7 +74,7 @@ export const NotificationSettingsPage: React.FC = () => {
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         checked={aiAlerts}
-                                        onChange={() => setAiAlerts(!aiAlerts)}
+                                        onChange={(e) => updateSetting('aiAlerts', e.target.checked)}
                                         className="sr-only peer"
                                         type="checkbox"
                                     />
@@ -85,7 +92,7 @@ export const NotificationSettingsPage: React.FC = () => {
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         checked={emailSummaries}
-                                        onChange={() => setEmailSummaries(!emailSummaries)}
+                                        onChange={(e) => updateSetting('emailSummaries', e.target.checked)}
                                         className="sr-only peer"
                                         type="checkbox"
                                     />
@@ -109,7 +116,7 @@ export const NotificationSettingsPage: React.FC = () => {
                                 <label className="relative inline-flex items-center cursor-pointer">
                                     <input
                                         checked={systemNotifications}
-                                        onChange={() => setSystemNotifications(!systemNotifications)}
+                                        onChange={(e) => updateSetting('systemNotifications', e.target.checked)}
                                         className="sr-only peer"
                                         type="checkbox"
                                     />
