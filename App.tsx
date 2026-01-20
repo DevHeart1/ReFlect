@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { JournalModal } from './components/JournalModal';
 import { SignIn } from './components/SignIn';
 import { OnboardingFlow } from './components/Onboarding';
+import { SettingsLayout } from './components/SettingsLayout';
 import { JournalEntry } from './types';
 import { getAppSettings } from './utils/storage';
 import {
@@ -270,11 +271,15 @@ const App: React.FC = () => {
               <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
               <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/settings/general" element={<GeneralSettingsPage />} />
-              <Route path="/settings/profile" element={<ProfileSettingsPage />} />
-              <Route path="/settings/data" element={<DataManagementPage />} />
-              <Route path="/settings/notifications" element={<NotificationSettingsPage />} />
+
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route index element={<SettingsPage />} />
+                <Route path="general" element={<GeneralSettingsPage />} />
+                <Route path="profile" element={<ProfileSettingsPage />} />
+                <Route path="data" element={<DataManagementPage />} />
+                <Route path="notifications" element={<NotificationSettingsPage />} />
+              </Route>
+
               <Route path="/year-report" element={<YearReportPage />} />
               <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
               <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
