@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getAppSettings, saveAppSettings, DEFAULT_SETTINGS, AppSettings } from '../utils/storage';
+import { getAppSettings, saveAppSettings, getJournalEntries, getMoodCheckins, getUserProfile, AppSettings } from '../utils/storage';
 
 export const PrivacySettings: React.FC = () => {
   // Initialize state from storage
@@ -14,6 +14,27 @@ export const PrivacySettings: React.FC = () => {
 
   // Destructure for easier access
   const { biometricEnabled, autoLockTimer, aiPersonalization, anonymousData } = settings;
+
+  // Export Data Handler
+  const handleExportData = () => {
+    const data = {
+      profile: getUserProfile(),
+      settings: getAppSettings(),
+      journalEntries: getJournalEntries(),
+      moodCheckins: getMoodCheckins(),
+      exportDate: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `reflect-data-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-10 animate-fade-in-up">
@@ -137,7 +158,10 @@ export const PrivacySettings: React.FC = () => {
                 <h4 className="font-bold text-gray-900 dark:text-white">Download Journal Entries</h4>
                 <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Export all your thoughts and data in PDF or JSON format for your own records.</p>
               </div>
-              <button className="flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 px-5 py-2.5 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors whitespace-nowrap shadow-sm">
+              <button
+                onClick={handleExportData}
+                className="flex items-center justify-center gap-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-gray-700 px-5 py-2.5 rounded-lg text-sm font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/10 transition-colors whitespace-nowrap shadow-sm"
+              >
                 <span className="material-symbols-outlined text-[20px]">download</span>
                 Export Data
               </button>
