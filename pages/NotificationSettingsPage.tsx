@@ -45,15 +45,34 @@ export const NotificationSettingsPage: React.FC = () => {
                                     </label>
                                 </div>
                             </div>
-                            <div className="mt-4 flex items-center gap-3">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Remind me at:</span>
-                                <input
-                                    className="bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-primary focus:border-primary px-3 py-1.5"
-                                    type="time"
-                                    value={reminderTime}
-                                    onChange={(e) => updateSetting('reminderTime', e.target.value)}
-                                    disabled={!dailyReminders}
-                                />
+                            <div className={`mt-6 flex items-center justify-between p-4 rounded-xl transition-all ${dailyReminders ? 'bg-primary/5 border border-primary/10' : 'bg-gray-50 dark:bg-white/5 border border-transparent opacity-50'}`}>
+                                <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${dailyReminders ? 'bg-primary text-white shadow-lg shadow-primary/30' : 'bg-gray-200 dark:bg-gray-700 text-gray-400'}`}>
+                                        <span className="material-symbols-outlined">schedule</span>
+                                    </div>
+                                    <div>
+                                        <p className={`font-bold text-sm ${dailyReminders ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}>Daily Time</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">When should we notify you?</p>
+                                    </div>
+                                </div>
+                                <div className="relative">
+                                    <input
+                                        className={`
+                                            bg-white dark:bg-card-dark 
+                                            border-2 ${dailyReminders ? 'border-primary/20 focus:border-primary' : 'border-gray-200 dark:border-gray-700'} 
+                                            rounded-xl text-lg font-bold 
+                                            text-gray-900 dark:text-white 
+                                            focus:ring-4 focus:ring-primary/10 outline-none 
+                                            pl-4 pr-2 py-2 
+                                            transition-all cursor-pointer
+                                            disabled:cursor-not-allowed
+                                        `}
+                                        type="time"
+                                        value={reminderTime}
+                                        onChange={(e) => updateSetting('reminderTime', e.target.value)}
+                                        disabled={!dailyReminders}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
