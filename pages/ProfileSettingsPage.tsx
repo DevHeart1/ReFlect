@@ -30,6 +30,11 @@ export const ProfileSettingsPage: React.FC = () => {
         setIsEditing(false);
     };
 
+    const handleResetPassword = () => {
+        // In a real app, this would call an API
+        alert(`Password reset instructions have been sent to ${profile.email}`);
+    };
+
     return (
         <div className="flex-1 flex overflow-hidden h-full bg-gray-50/50 dark:bg-background-dark animate-fade-in-up">
             <SettingsSidebar />
@@ -99,14 +104,25 @@ export const ProfileSettingsPage: React.FC = () => {
                                         <p className="text-sm text-gray-500 dark:text-gray-400">{profile.email}</p>
                                     )}
                                 </div>
-                                <button className="text-sm font-bold text-primary hover:underline">Change Email</button>
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="text-sm font-bold text-primary hover:underline"
+                                >
+                                    Change Email
+                                </button>
                             </div>
                             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="space-y-1">
                                     <h4 className="font-bold text-gray-900 dark:text-white">Password</h4>
                                     <p className="text-sm text-gray-500 dark:text-gray-400">Last changed 3 months ago</p>
                                 </div>
-                                <button className="text-sm font-bold text-primary hover:underline">Reset Password</button>
+
+                                <button
+                                    onClick={handleResetPassword}
+                                    className="text-sm font-bold text-primary hover:underline"
+                                >
+                                    Reset Password
+                                </button>
                             </div>
                         </div>
                     </section>
@@ -182,7 +198,7 @@ export const ProfileSettingsPage: React.FC = () => {
                     </div>
 
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };

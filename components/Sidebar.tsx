@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { getUserProfile, UserProfile } from '../utils/storage';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -7,7 +8,18 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => {
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [profile, setProfile] = useState<UserProfile>(getUserProfile());
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      setProfile(getUserProfile());
+    };
+
+    window.addEventListener('profile-updated', handleProfileUpdate);
+    return () => window.removeEventListener('profile-updated', handleProfileUpdate);
+  }, []);
+
   const navItems = [
     { path: '/', label: 'Journal', icon: 'book', exact: true },
     { path: '/insights', label: 'Insights', icon: 'bar_chart' },
@@ -73,11 +85,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
           >
             <div
               className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm"
-              style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg')" }}
+              style={{ backgroundImage: `url('${profile.avatarUrl}')` }}
             />
             <div className="flex flex-col flex-1">
-              <p className="text-sm font-bold text-gray-900 dark:text-white">Alex Morgan</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Pro Member</p>
+              <p className="text-sm font-bold text-gray-900 dark:text-white">{profile.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{profile.isPro ? 'Pro Member' : 'Free Plan'}</p>
             </div>
             <span className="material-symbols-outlined text-gray-400">more_vert</span>
           </button>

@@ -126,6 +126,7 @@ export const getUserProfile = (): UserProfile => {
 
 export const saveUserProfile = (profile: UserProfile) => {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    window.dispatchEvent(new Event('profile-updated'));
 };
 
 export const clearUserSession = () => {
