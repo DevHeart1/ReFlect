@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-
+import { getAppSettings, saveAppSettings, DEFAULT_SETTINGS, AppSettings } from '../utils/storage';
 
 export const PrivacySettings: React.FC = () => {
-  const [biometricEnabled, setBiometricEnabled] = useState(true);
-  const [autoLockTimer, setAutoLockTimer] = useState('15 Minutes');
-  const [aiPersonalization, setAiPersonalization] = useState(true);
-  const [anonymousData, setAnonymousData] = useState(false);
+  // Initialize state from storage
+  const [settings, setSettings] = useState<AppSettings>(() => getAppSettings());
+
+  // Helper to update settings
+  const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {
+    const newSettings = { ...settings, [key]: value };
+    setSettings(newSettings);
+    saveAppSettings(newSettings);
+  };
+
+  // Destructure for easier access
+  const { biometricEnabled, autoLockTimer, aiPersonalization, anonymousData } = settings;
 
   return (
     <div className="flex-1 overflow-y-auto p-6 lg:p-10 animate-fade-in-up">
@@ -51,7 +59,7 @@ export const PrivacySettings: React.FC = () => {
                     type="checkbox"
                     className="sr-only peer"
                     checked={biometricEnabled}
-                    onChange={() => setBiometricEnabled(!biometricEnabled)}
+                    onChange={() => updateSetting('biometricEnabled', !biometricEnabled)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
@@ -64,7 +72,7 @@ export const PrivacySettings: React.FC = () => {
               </div>
               <select
                 value={autoLockTimer}
-                onChange={(e) => setAutoLockTimer(e.target.value)}
+                onChange={(e) => updateSetting('autoLockTimer', e.target.value)}
                 className="bg-gray-50 dark:bg-white/5 border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-700 dark:text-gray-300 focus:ring-primary focus:border-primary py-2 px-3"
               >
                 <option>5 Minutes</option>
@@ -94,7 +102,7 @@ export const PrivacySettings: React.FC = () => {
                     type="checkbox"
                     className="sr-only peer"
                     checked={aiPersonalization}
-                    onChange={() => setAiPersonalization(!aiPersonalization)}
+                    onChange={() => updateSetting('aiPersonalization', !aiPersonalization)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>
@@ -111,7 +119,7 @@ export const PrivacySettings: React.FC = () => {
                     type="checkbox"
                     className="sr-only peer"
                     checked={anonymousData}
-                    onChange={() => setAnonymousData(!anonymousData)}
+                    onChange={() => updateSetting('anonymousData', !anonymousData)}
                   />
                   <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                 </label>

@@ -74,6 +74,11 @@ export interface AppSettings {
     fontSize: number;
     highContrast: boolean;
     screenReader: boolean;
+    // Privacy
+    biometricEnabled: boolean;
+    autoLockTimer: string;
+    aiPersonalization: boolean;
+    anonymousData: boolean;
 }
 
 export interface UserProfile {
@@ -92,7 +97,11 @@ export const DEFAULT_SETTINGS: AppSettings = {
     timeZone: '(UTC-08:00) Pacific',
     fontSize: 2,
     highContrast: false,
-    screenReader: false
+    screenReader: false,
+    biometricEnabled: true,
+    autoLockTimer: '15 Minutes',
+    aiPersonalization: true,
+    anonymousData: false
 };
 
 export const DEFAULT_PROFILE: UserProfile = {
