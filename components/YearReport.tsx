@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog } from './Dialog';
 import { exportToJSON, exportToPDF } from '../utils/export';
+import { analyzeMoods, MoodStats } from '../utils/analytics';
 
 export const YearReport: React.FC = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
+  const [stats, setStats] = useState<MoodStats | null>(null);
+
+  useEffect(() => {
+    setStats(analyzeMoods());
+  }, []);
+
+  if (!stats) return null;
 
   return (
     <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8 animate-fade-in-up">
@@ -11,7 +19,7 @@ export const YearReport: React.FC = () => {
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-2 text-[#CCAB48] font-bold text-sm tracking-[0.2em] uppercase">
             <span className="material-symbols-outlined text-sm">event</span>
-            <span>Annual Insight 2023</span>
+            <span>Annual Insight {new Date().getFullYear()}</span>
           </div>
           <h2 className="text-5xl font-black tracking-tight text-[#131516] dark:text-white leading-tight">Your Year in Reflection</h2>
           <p className="text-lg text-gray-500 dark:text-gray-400 max-w-xl">A celebratory look at your emotional journey, personal growth, and consistency over the past twelve months.</p>
@@ -20,10 +28,10 @@ export const YearReport: React.FC = () => {
           <div className="relative">
             <span className="material-symbols-outlined text-5xl text-[#CCAB48]" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-xs font-bold text-white mt-1">365</span>
+              <span className="text-xs font-bold text-white mt-1">{stats.streak}</span>
             </div>
           </div>
-          <p className="text-xs font-bold text-[#CCAB48] mt-2 uppercase tracking-widest">Streak</p>
+          <p className="text-xs font-bold text-[#CCAB48] mt-2 uppercase tracking-widest">Current Streak</p>
         </div>
       </header>
 
@@ -42,10 +50,9 @@ export const YearReport: React.FC = () => {
             </div>
             <div className="space-y-4">
               <p className="text-xl font-medium leading-relaxed text-gray-800 dark:text-gray-200">
-                "This year, you focused heavily on <span className="text-primary dark:text-blue-300">gratitude and resilience</span>. Your journey reflects a significant shift from reactive stress management to proactive mindfulness."
-              </p>
-              <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
-                Through 312 entries, our AI identified that your most transformative period occurred in May, where you prioritized deep work and meditation. You've successfully cultivated a vocabulary for nuanced emotions, moving beyond simple 'happy' or 'sad' to describe complex states like 'melancholic peace' and 'vibrant focus'.
+                "You have logged <span className="text-primary dark:text-blue-300">{stats.total} entries</span> this year.
+                {stats.topMoods.length > 0 && <> Your most frequent mood was <span className="font-bold">{stats.topMoods[0].mood}</span>.</>}
+                Keep documenting your journey to unlock deeper insights."
               </p>
             </div>
           </div>
@@ -54,107 +61,55 @@ export const YearReport: React.FC = () => {
         {/* Sentiment Distribution */}
         <section className="lg:col-span-4 bg-white dark:bg-card-dark rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-soft flex flex-col items-center">
           <h3 className="text-lg font-bold mb-8 w-full text-gray-900 dark:text-white">Sentiment Distribution</h3>
-          <div className="relative w-48 h-48 mb-8">
-            <svg className="w-full h-full" viewBox="0 0 100 100">
-              <circle className="stroke-[#CCAB48]" cx="50" cy="50" fill="transparent" r="40" strokeDasharray="150.7 100.5" strokeWidth="12" transform="rotate(-90 50 50)"></circle>
-              <circle className="stroke-primary" cx="50" cy="50" fill="transparent" r="40" strokeDasharray="50.2 201" strokeDashoffset="-150.7" strokeWidth="12" transform="rotate(-90 50 50)"></circle>
-              <circle className="stroke-[#94a3b8]" cx="50" cy="50" fill="transparent" r="40" strokeDasharray="25.1 226.1" strokeDashoffset="-200.9" strokeWidth="12" transform="rotate(-90 50 50)"></circle>
-              <circle className="stroke-[#e2e8f0]" cx="50" cy="50" fill="transparent" r="40" strokeDasharray="25.1 226.1" strokeDashoffset="-226.1" strokeWidth="12" transform="rotate(-90 50 50)"></circle>
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-3xl font-black text-gray-900 dark:text-white">60%</span>
-              <span className="text-xs font-bold text-[#CCAB48] uppercase tracking-tighter">Joy</span>
-            </div>
-          </div>
-          <div className="w-full space-y-3">
-            <div className="flex items-center justify-between text-gray-700 dark:text-gray-300">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-[#CCAB48]"></div>
-                <span className="text-sm font-medium">Joy</span>
-              </div>
-              <span className="text-sm font-bold">60%</span>
-            </div>
-            <div className="flex items-center justify-between text-gray-700 dark:text-gray-300">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary"></div>
-                <span className="text-sm font-medium">Calm</span>
-              </div>
-              <span className="text-sm font-bold">20%</span>
-            </div>
-            <div className="flex items-center justify-between text-gray-700 dark:text-gray-300">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-slate-400"></div>
-                <span className="text-sm font-medium">Sadness</span>
-              </div>
-              <span className="text-sm font-bold">10%</span>
-            </div>
+
+          {/* Simple Bar Chart for Distribution */}
+          <div className="w-full space-y-4">
+            {stats.distribution.length === 0 ? (
+              <p className="text-gray-500 text-sm text-center">No mood data available yet.</p>
+            ) : (
+              stats.distribution.sort((a, b) => b.count - a.count).slice(0, 5).map((item) => (
+                <div key={item.mood} className="space-y-1">
+                  <div className="flex justify-between text-xs font-bold uppercase text-gray-500">
+                    <span>{item.mood}</span>
+                    <span>{Math.round((item.count / stats.total) * 100)}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full"
+                      style={{ width: `${(item.count / stats.total) * 100}%` }}
+                    ></div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </section>
 
-        {/* Mood Heatmap */}
+        {/* Mood Heatmap (Simplified to Recent History) */}
         <section className="lg:col-span-12 bg-white dark:bg-card-dark rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-soft">
           <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Mood Heatmap</h3>
-              <p className="text-sm text-gray-500">Emotional frequency across all 12 months</p>
-            </div>
-            <div className="flex items-center gap-2 text-xs font-medium text-gray-400">
-              <span>Less Intense</span>
-              <div className="flex gap-1">
-                <div className="w-3 h-3 bg-primary/5 rounded"></div>
-                <div className="w-3 h-3 bg-primary/20 rounded"></div>
-                <div className="w-3 h-3 bg-primary/40 rounded"></div>
-                <div className="w-3 h-3 bg-primary/60 rounded"></div>
-                <div className="w-3 h-3 bg-primary/80 rounded"></div>
-                <div className="w-3 h-3 bg-primary rounded"></div>
-              </div>
-              <span>More Intense</span>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Recent Mood History</h3>
+              <p className="text-sm text-gray-500">Your latest check-ins</p>
             </div>
           </div>
-          <div className="overflow-x-auto pb-2">
-            <div className="min-w-[800px] grid grid-cols-12 gap-6">
-              {/* Jan */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold uppercase text-gray-400 mb-1">Jan</span>
-                <div className="grid grid-cols-4 gap-1">
-                  <div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/80"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/60"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/80"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/80"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/60"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/80"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div>
-                </div>
-              </div>
-              {/* Feb */}
-              <div className="flex flex-col gap-2">
-                <span className="text-[10px] font-bold uppercase text-gray-400 mb-1">Feb</span>
-                <div className="grid grid-cols-4 gap-1">
-                  <div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/80"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                  <div className="aspect-square rounded-[2px] bg-primary/40"></div><div className="aspect-square rounded-[2px] bg-primary/10"></div><div className="aspect-square rounded-[2px] bg-primary/20"></div><div className="aspect-square rounded-[2px] bg-primary/60"></div>
-                </div>
-              </div>
-              {/* May (Highlight) */}
-              <div className="flex flex-col gap-2 col-span-1">
-                <span className="text-[10px] font-bold uppercase text-[#CCAB48] mb-1">May</span>
-                <div className="grid grid-cols-4 gap-1">
-                  {Array.from({ length: 31 }).map((_, i) => (
-                    <div key={i} className={`aspect-square rounded-[2px] ${i % 2 === 0 ? 'bg-primary' : 'bg-primary/80'}`}></div>
-                  ))}
-                </div>
-              </div>
-              {/* Placeholder */}
-              <div className="flex flex-col gap-2 col-span-9 opacity-40 italic text-xs items-center justify-center border border-dashed border-gray-200 rounded-lg text-gray-400">
-                <span>June - December data visualised similarly</span>
-              </div>
+
+          {stats.heatmap.length === 0 ? (
+            <p className="text-gray-500 italic">Start tracking your mood to see your history here.</p>
+          ) : (
+            <div className="flex flex-wrap gap-1">
+              {stats.heatmap.slice(0, 365).map((entry, i) => (
+                <div
+                  key={i}
+                  title={`${new Date(entry.date).toLocaleDateString()} - Intensity: ${entry.intensity}`}
+                  className={`w-3 h-3 rounded-[1px] ${entry.intensity >= 4 ? 'bg-green-500' :
+                      entry.intensity === 3 ? 'bg-gray-300' :
+                        'bg-red-400'
+                    }`}
+                ></div>
+              ))}
             </div>
-          </div>
+          )}
         </section>
 
         {/* Word Cloud */}
@@ -239,6 +194,6 @@ export const YearReport: React.FC = () => {
           </button>
         </div>
       </Dialog>
-    </div>
+    </div >
   );
 };
