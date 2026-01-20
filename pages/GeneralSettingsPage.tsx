@@ -3,13 +3,10 @@ import React, { useState, useEffect } from 'react';
 import { getAppSettings, saveAppSettings, DEFAULT_SETTINGS, AppSettings } from '../utils/storage';
 
 export const GeneralSettingsPage: React.FC = () => {
-    // Initialize state from storage
-    const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+    // Initialize state from storage directly to avoid flash of default state
+    const [settings, setSettings] = useState<AppSettings>(() => getAppSettings());
 
-    // Initial load
-    useEffect(() => {
-        setSettings(getAppSettings());
-    }, []);
+
 
     // Apply theme side-effect
     useEffect(() => {
