@@ -1,20 +1,17 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { getMoodCheckins, MoodCheckin } from '../utils/storage';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../utils/db';
+import { MoodCheckin } from '../utils/storage';
 
 type TimeRange = '30days' | '3months';
 
 export const PersonalInsights: React.FC = () => {
-  const [entries, setEntries] = useState<MoodCheckin[]>([]);
+  const entries = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().toArray()) || [];
   const [timeRange, setTimeRange] = useState<TimeRange>('30days');
   const [filteredEntries, setFilteredEntries] = useState<MoodCheckin[]>([]);
   const [streak, setStreak] = useState(0);
   const [topEmotion, setTopEmotion] = useState<{ label: string; count: number }>({ label: 'N/A', count: 0 });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-
-  useEffect(() => {
-    const data = getMoodCheckins();
-    setEntries(data);
-  }, []);
 
   useEffect(() => {
     filterData();

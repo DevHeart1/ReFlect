@@ -1,4 +1,4 @@
-import { getMoodCheckins, MoodCheckin } from './storage';
+import { MoodCheckin } from './storage';
 
 export interface MoodStats {
     total: number;
@@ -8,8 +8,7 @@ export interface MoodStats {
     heatmap: { date: string; intensity: number }[];
 }
 
-export const analyzeMoods = (): MoodStats => {
-    const checkins = getMoodCheckins();
+export const analyzeMoods = (checkins: MoodCheckin[]): MoodStats => {
     const total = checkins.length;
 
     if (total === 0) {

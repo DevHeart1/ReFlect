@@ -5,8 +5,10 @@ import { JournalModal } from './components/JournalModal';
 import { SignIn } from './components/SignIn';
 import { OnboardingFlow } from './components/Onboarding';
 import { SettingsLayout } from './components/SettingsLayout';
-import { JournalEntry } from './types';
+import { JournalEntry, Template } from './types';
 import { getAppSettings } from './utils/storage';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db, initDatabase } from './utils/db';
 import {
   Dashboard,
   MoodTrackerPage,
@@ -53,8 +55,6 @@ const INITIAL_ENTRIES: JournalEntry[] = [
   }
 ];
 
-// Initial Templates Data
-import { Template } from './types';
 const INITIAL_TEMPLATES: Template[] = [
   {
     id: 'gratitude',
@@ -161,11 +161,27 @@ const App: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [entries, setEntries] = useState<JournalEntry[]>(INITIAL_ENTRIES);
-  const [templates, setTemplates] = useState<Template[]>(INITIAL_TEMPLATES);
 
-  // Apply Theme from Storage on Mount
+  // DB Live Queries
+  const entries = useLiveQuery(() => db.journalEntries.orderBy('date').reverse().toArray()) || [];
+  const templates = useLiveQuery(() => db.templates.toArray()) || [];
+
+  // Initialize DB and Apply Theme
   useEffect(() => {
+    const init = async () => {
+      // Initialize DB and seed templates
+      await initDatabase(INITIAL_TEMPLATES);
+
+      // Seed initial entries if DB is empty and no local storage migration happened
+      if ((await db.journalEntries.count()) === 0) {
+        const hasLocalData = localStorage.getItem('reflect_journal_entries');
+        if (!hasLocalData) {
+          await db.journalEntries.bulkPut(INITIAL_ENTRIES);
+        }
+      }
+    };
+    init();
+
     const applyTheme = () => {
       const settings = getAppSettings();
       const root = window.document.documentElement;
@@ -182,46 +198,44 @@ const App: React.FC = () => {
     applyTheme();
   }, []);
 
-  const handleSaveEntry = (title: string, content: string) => {
+  const handleSaveEntry = async (title: string, content: string) => {
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
       title: title,
       excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...', // Create plain text excerpt from HTML
       content: content,
-      date: 'Just now',
+      date: new Date().toISOString(), // Use ISO for better sorting in DB
       tags: ['Journal', 'Reflective'],
       type: 'journal',
       mood: 'Calm',
       icon: 'spa',
       colorClass: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
     };
-    setEntries([newEntry, ...entries]);
+    await db.journalEntries.add(newEntry);
   };
 
-  const handleDeleteEntry = (id: string) => {
-    setEntries(entries.filter(entry => entry.id !== id));
+  const handleDeleteEntry = async (id: string) => {
+    await db.journalEntries.delete(id);
   };
 
-  const handleEditEntry = (id: string, title: string, content: string) => {
-    setEntries(entries.map(entry =>
-      entry.id === id
-        ? { ...entry, title, excerpt: content }
-        : entry
-    ));
+  const handleEditEntry = async (id: string, title: string, content: string) => {
+    await db.journalEntries.update(id, {
+      title,
+      excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
+      content
+    });
   };
 
-  const handleAddTemplate = (newTemplate: Template) => {
-    setTemplates([...templates, newTemplate]);
+  const handleAddTemplate = async (newTemplate: Template) => {
+    await db.templates.add(newTemplate);
   };
 
   const handleSignIn = () => {
-    // Existing user flow -> Dashboard
     setIsAuthenticated(true);
     setShowOnboarding(false);
   };
 
   const handleSignUp = () => {
-    // New user flow -> Onboarding
     setIsAuthenticated(true);
     setShowOnboarding(true);
   };
@@ -269,7 +283,6 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Dashboard entries={entries} />} />
               <Route path="/mood-tracker" element={<MoodTrackerPage />} />
-              <Route path="/insights" element={<InsightsPage />} />
               <Route path="/insights" element={<InsightsPage />} />
               <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
               <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />

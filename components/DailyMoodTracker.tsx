@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Dialog } from './Dialog';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../utils/db';
+import { getMoodValue } from '../utils/storage';
 
 export const DailyMoodTracker: React.FC = () => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -7,6 +10,8 @@ export const DailyMoodTracker: React.FC = () => {
   const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+
+  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(5).toArray()) || [];
 
   const moods = [
     { label: 'Radiant', icon: 'sunny', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-400', ring: 'ring-amber-400' },
@@ -33,32 +38,43 @@ export const DailyMoodTracker: React.FC = () => {
     setSelectedFactors(prev => prev.includes(factor) ? prev.filter(f => f !== factor) : [...prev, factor]);
   };
 
-  // handleClose is no longer needed as a general close handler for the details dialog,
-  // as the dialog is removed. The reset logic is now part of handleSave.
-  // For the success dialog, we'll use setShowSuccess(false) directly.
-
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!selectedMood) return;
 
-    import('../utils/storage').then(({ saveMoodCheckin, getMoodValue }) => {
-      saveMoodCheckin({
-        mood: selectedMood,
-        moodValue: getMoodValue(selectedMood),
-        secondaryEmotions: selectedTags,
-        factors: selectedFactors,
-        note
-      });
-
-      // Show success dialog
-      setShowSuccess(true);
-
-      // Reset form
-      setSelectedMood(null);
-      setSelectedTags([]);
-      setSelectedFactors([]);
-      setNote('');
+    await db.moodCheckins.add({
+      id: crypto.randomUUID(),
+      date: new Date().toISOString(),
+      mood: selectedMood,
+      moodValue: getMoodValue(selectedMood),
+      secondaryEmotions: selectedTags,
+      factors: selectedFactors,
+      note
     });
+
+    // Show success dialog
+    setShowSuccess(true);
+
+    // Reset form
+    setSelectedMood(null);
+    setSelectedTags([]);
+    setSelectedFactors([]);
+    setNote('');
   };
+
+  const getMoodColorClass = (moodLabel: string) => {
+    const mood = moods.find(m => m.label === moodLabel);
+    return mood ? mood.bg.split(' ')[0].replace('bg-', '') : 'gray-400';
+  };
+
+  const getMoodRingColor = (moodLabel: string) => {
+    const mood = moods.find(m => m.label === moodLabel);
+    // specific mapping for dots
+    if (moodLabel === 'Radiant') return 'bg-amber-400';
+    if (moodLabel === 'Content') return 'bg-emerald-400';
+    if (moodLabel === 'Neutral') return 'bg-gray-400';
+    if (moodLabel === 'Low') return 'bg-blue-400';
+    return 'bg-rose-400';
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-10 animate-fade-in-up">
@@ -200,63 +216,34 @@ export const DailyMoodTracker: React.FC = () => {
             </div>
 
             <div className="relative pl-4 border-l border-gray-200 dark:border-gray-700 space-y-8 pb-4">
-
-              {/* Entry 1 */}
-              <div className="relative pl-6 group cursor-pointer">
-                <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-4 ring-white dark:ring-card-dark"></div>
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-bold text-gray-400">09:30 AM</span>
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-orange-400" title="Social"></span>
-                    <span className="w-2 h-2 rounded-full bg-blue-400" title="Work"></span>
+              {recentMoods.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">No moods logged yet.</p>
+              ) : recentMoods.map(entry => (
+                <div key={entry.id} className="relative pl-6 group cursor-pointer">
+                  <div className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${getMoodRingColor(entry.mood)} ring-4 ring-white dark:ring-card-dark`}></div>
+                  <div className="flex justify-between items-start mb-1">
+                    <span className="text-xs font-bold text-gray-400">
+                      {new Date(entry.date).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: 'numeric' })}
+                    </span>
+                    {entry.factors.length > 0 && (
+                      <div className="flex gap-1">
+                        {entry.factors.slice(0, 2).map((f, i) => (
+                          <span key={i} className="w-2 h-2 rounded-full bg-gray-400" title={f}></span>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                  <h4 className="text-base font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">{entry.mood}</h4>
+                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{entry.note || 'No note added.'}</p>
+                  {entry.secondaryEmotions.length > 0 && (
+                    <div className="flex gap-2 mt-2 flex-wrap">
+                      {entry.secondaryEmotions.slice(0, 2).map(tag => (
+                        <span key={tag} className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full">{tag}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <h4 className="text-base font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">Feeling Content</h4>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">Had a productive morning meeting. Felt really heard by the team.</p>
-                <div className="flex gap-2 mt-2">
-                  <span className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full">Productive</span>
-                </div>
-              </div>
-
-              {/* Entry 2 */}
-              <div className="relative pl-6 group cursor-pointer">
-                <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-amber-400 ring-4 ring-white dark:ring-card-dark"></div>
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-bold text-gray-400">Yesterday, 8:00 PM</span>
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400" title="Exercise"></span>
-                  </div>
-                </div>
-                <h4 className="text-base font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">Radiant Evening</h4>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">Great yoga session. Feeling very connected and peaceful.</p>
-              </div>
-
-              {/* Entry 3 */}
-              <div className="relative pl-6 group cursor-pointer">
-                <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-gray-300 ring-4 ring-white dark:ring-card-dark"></div>
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-bold text-gray-400">Yesterday, 2:00 PM</span>
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-blue-400" title="Work"></span>
-                  </div>
-                </div>
-                <h4 className="text-base font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">Neutral State</h4>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">Just a regular afternoon. Nothing special happening, bit bored.</p>
-              </div>
-
-              {/* Entry 4 */}
-              <div className="relative pl-6 group cursor-pointer">
-                <div className="absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full bg-rose-400 ring-4 ring-white dark:ring-card-dark"></div>
-                <div className="flex justify-between items-start mb-1">
-                  <span className="text-xs font-bold text-gray-400">Oct 22, 10:15 AM</span>
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 rounded-full bg-indigo-400" title="Sleep"></span>
-                  </div>
-                </div>
-                <h4 className="text-base font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">Distressed</h4>
-                <p className="text-sm text-gray-500 mt-1 line-clamp-2">Bad sleep last night. Feeling groggy and irritable.</p>
-              </div>
-
+              ))}
             </div>
 
             <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
@@ -265,7 +252,7 @@ export const DailyMoodTracker: React.FC = () => {
                 <div>
                   <p className="text-xs font-bold text-primary uppercase mb-1">Insight</p>
                   <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    You report feeling <span className="font-bold text-emerald-600 dark:text-emerald-400">Content</span> 80% of the time after Exercise.
+                    Consistent tracking unlocks AI insights about your emotional patterns.
                   </p>
                 </div>
               </div>

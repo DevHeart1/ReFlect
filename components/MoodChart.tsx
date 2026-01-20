@@ -1,18 +1,35 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { MoodData } from '../types';
-
-const data: MoodData[] = [
-  { day: 'Mon', value: 30 },
-  { day: 'Tue', value: 45 },
-  { day: 'Wed', value: 65 },
-  { day: 'Thu', value: 50 },
-  { day: 'Fri', value: 45 },
-  { day: 'Sat', value: 75 },
-  { day: 'Sun', value: 85 },
-];
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../utils/db';
 
 export const MoodChart: React.FC = () => {
+  const moods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(50).toArray()) || [];
+
+  const data = useMemo(() => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const chartData = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      const dayName = days[d.getDay()];
+
+      // Find avg mood for this day
+      const dayStr = d.toDateString();
+      const dayMoods = moods.filter(m => new Date(m.date).toDateString() === dayStr);
+
+      let value = 0;
+      if (dayMoods.length > 0) {
+        const sum = dayMoods.reduce((acc, curr) => acc + (curr.moodValue || 3), 0); // Default to 3 if missing
+        value = (sum / dayMoods.length) * 20; // Scale 1-5 to 20-100 approx (5*20=100)
+      }
+
+      chartData.push({ day: dayName, value });
+    }
+    return chartData;
+  }, [moods]);
   return (
     <div className="h-full w-full min-h-[160px]">
       <ResponsiveContainer width="99%" height="100%">

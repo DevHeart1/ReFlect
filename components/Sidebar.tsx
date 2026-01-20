@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { getUserProfile, UserProfile } from '../utils/storage';
+import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../utils/db';
+import { DEFAULT_PROFILE } from '../utils/storage';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,16 +12,8 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>(getUserProfile());
 
-  useEffect(() => {
-    const handleProfileUpdate = () => {
-      setProfile(getUserProfile());
-    };
-
-    window.addEventListener('profile-updated', handleProfileUpdate);
-    return () => window.removeEventListener('profile-updated', handleProfileUpdate);
-  }, []);
+  const profile = useLiveQuery(() => db.profile.get('current')) || DEFAULT_PROFILE;
 
   const navItems = [
     { path: '/', label: 'Journal', icon: 'book', exact: true },

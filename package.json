@@ -21,6 +21,8 @@
     "@tiptap/extension-youtube": "^3.15.3",
     "@tiptap/react": "^3.15.3",
     "@tiptap/starter-kit": "^3.15.3",
+    "dexie": "^4.2.1",
+    "dexie-react-hooks": "^4.2.0",
     "emoji-picker-react": "^4.16.1",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",

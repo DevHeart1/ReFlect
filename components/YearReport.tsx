@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../utils/db';
 import { Dialog } from './Dialog';
 import { exportToJSON, exportToPDF } from '../utils/export';
 import { analyzeMoods, MoodStats } from '../utils/analytics';
 
 export const YearReport: React.FC = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const [stats, setStats] = useState<MoodStats | null>(null);
+  const checkins = useLiveQuery(() => db.moodCheckins.toArray()) || [];
 
-  useEffect(() => {
-    setStats(analyzeMoods());
-  }, []);
+  const stats = useMemo(() => analyzeMoods(checkins), [checkins]);
 
-  if (!stats) return null;
+  // if (!stats) return null; // analyzeMoods always returns object now
+
 
   return (
     <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8 animate-fade-in-up">
