@@ -70,11 +70,18 @@ export const YearReport: React.FC = () => {
                   let cumulativePercent = 0;
                   return stats.distribution.sort((a, b) => b.count - a.count).map((item, i) => {
                     const percent = (stats.total > 0) ? (item.count / stats.total) : 0;
-                    const startX = Math.cos(2 * Math.PI * cumulativePercent);
-                    const startY = Math.sin(2 * Math.PI * cumulativePercent);
+                    if (percent <= 0) return null;
+
+                    const startAngle = 2 * Math.PI * cumulativePercent;
+                    const endAngle = 2 * Math.PI * (cumulativePercent + percent);
+
+                    // Coordinates on unit circle
+                    const startX = Math.cos(startAngle);
+                    const startY = Math.sin(startAngle);
+                    const endX = Math.cos(endAngle);
+                    const endY = Math.sin(endAngle);
+
                     cumulativePercent += percent;
-                    const endX = Math.cos(2 * Math.PI * cumulativePercent);
-                    const endY = Math.sin(2 * Math.PI * cumulativePercent);
 
                     // Handle single item case (100% circle)
                     if (stats.distribution.length === 1 || percent > 0.999) {
@@ -88,10 +95,10 @@ export const YearReport: React.FC = () => {
 
                     const largeArcFlag = percent > 0.5 ? 1 : 0;
 
-                    // Guard against NaN
-                    if (isNaN(startX) || isNaN(startY) || isNaN(endX) || isNaN(endY)) return null;
+                    // Use toFixed to avoid scientific notation and NaN issues
+                    const p = (n: number) => n.toFixed(5);
 
-                    const pathData = `M 0 0 L ${startX} ${startY} A 1 1 0 ${largeArcFlag} 1 ${endX} ${endY} Z`;
+                    const pathData = `M 0 0 L ${p(startX)} ${p(startY)} A 1 1 0 ${largeArcFlag} 1 ${p(endX)} ${p(endY)} Z`;
 
                     return (
                       <path
