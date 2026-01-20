@@ -21,7 +21,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                 </div>
                 <div className="flex items-center gap-3">
                     <span className="text-sm font-medium text-gray-500 dark:text-gray-400 bg-white dark:bg-white/5 px-4 py-2 rounded-full shadow-sm border border-gray-100 dark:border-gray-700">
-                        Today: <span className="text-primary dark:text-primary-light font-bold">Oct 24</span>
+                        Today: <span className="text-primary dark:text-primary-light font-bold">{new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                     </span>
                     <button
                         onClick={() => navigate('/notifications')}

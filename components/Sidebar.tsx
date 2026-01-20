@@ -9,6 +9,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const [profile, setProfile] = useState<UserProfile>(getUserProfile());
 
   useEffect(() => {
@@ -29,8 +30,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
   ];
 
   const sidebarClasses = `
-    fixed inset-y-0 left-0 z-40 w-72 bg-card-light dark:bg-card-dark border-r border-gray-100 dark:border-gray-800 p-6 shadow-soft transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex lg:flex-col
-    ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+    fixed inset-y-0 left-0 z-40 bg-card-light dark:bg-card-dark border-r border-gray-100 dark:border-gray-800 shadow-soft transition-all duration-300 ease-in-out lg:static lg:flex lg:flex-col
+    ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+    ${isCollapsed ? 'lg:w-20' : 'lg:w-72 w-72'}
   `;
 
   return (
@@ -44,80 +46,106 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
       )}
 
       <aside className={sidebarClasses}>
-        {/* Logo */}
-        <div className="flex items-center gap-3 mb-10">
-          <div className="bg-primary/10 dark:bg-white/10 p-2 rounded-lg text-primary dark:text-white">
-            <span className="material-symbols-outlined text-3xl">spa</span>
-          </div>
-          <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-tight text-primary dark:text-white">Re-Flect</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Mindfulness AI</p>
-          </div>
-        </div>
+        {/* Toggle Button (Desktop Only) */}
+        <button
+          onClick={() => setIsCollapsed(!isCollapsed)}
+          className="hidden lg:flex absolute -right-3 top-9 w-6 h-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full items-center justify-center text-gray-500 hover:text-primary transition-colors shadow-sm z-50"
+        >
+          <span className="material-symbols-outlined text-sm">
+            {isCollapsed ? 'chevron_right' : 'chevron_left'}
+          </span>
+        </button>
 
-        {/* Navigation */}
-        <nav className="flex-1 flex flex-col gap-2">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              end={item.exact}
-              onClick={closeMobileMenu}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-4 py-3 rounded-xl transition-colors font-medium w-full text-left
-                ${isActive
-                  ? 'bg-[#f1f5f9] text-[#2a5e6f] dark:bg-[#2a5e6f] dark:text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
-                }`
-              }
-            >
-              <span className="material-symbols-outlined">{item.icon}</span>
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* User Profile */}
-        <div className="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 relative">
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-full flex items-center gap-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 rounded-xl transition-colors text-left"
-          >
-            <div
-              className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm"
-              style={{ backgroundImage: `url('${profile.avatarUrl}')` }}
-            />
-            <div className="flex flex-col flex-1">
-              <p className="text-sm font-bold text-gray-900 dark:text-white">{profile.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">{profile.isPro ? 'Pro Member' : 'Free Plan'}</p>
+        <div className={`flex flex-col h-full ${isCollapsed ? 'px-3 py-6' : 'p-6'}`}>
+          {/* Logo */}
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} mb-10 transition-all`}>
+            <div className="bg-primary/10 dark:bg-white/10 p-2 rounded-lg text-primary dark:text-white shrink-0">
+              <span className="material-symbols-outlined text-3xl">spa</span>
             </div>
-            <span className="material-symbols-outlined text-gray-400">more_vert</span>
-          </button>
-
-          {/* Dropdown Menu */}
-          {isMenuOpen && (
-            <div className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-card-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animation-fade-in-up z-50">
-              <div className="p-1">
-                <NavLink
-                  to="/settings/profile"
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg w-full"
-                  onClick={() => { setIsMenuOpen(false); closeMobileMenu(); }}
-                >
-                  <span className="material-symbols-outlined text-lg">person</span>
-                  Profile Settings
-                </NavLink>
-                <button
-                  onClick={() => {
-                    import('../utils/storage').then(({ clearUserSession }) => clearUserSession());
-                  }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg w-full text-left"
-                >
-                  <span className="material-symbols-outlined text-lg">logout</span>
-                  Sign Out
-                </button>
+            {!isCollapsed && (
+              <div className="flex flex-col overflow-hidden whitespace-nowrap animate-fade-in">
+                <h1 className="text-xl font-bold tracking-tight text-primary dark:text-white">Re-Flect</h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Mindfulness AI</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          {/* Navigation */}
+          <nav className="flex-1 flex flex-col gap-2">
+            {navItems.map((item) => (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                end={item.exact}
+                onClick={closeMobileMenu}
+                className={({ isActive }) =>
+                  `flex items-center ${isCollapsed ? 'justify-center px-0 py-3' : 'gap-3 px-4 py-3'} rounded-xl transition-all font-medium relative group
+                    ${isActive
+                    ? 'bg-[#f1f5f9] text-[#2a5e6f] dark:bg-[#2a5e6f] dark:text-white'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
+                  }`
+                }
+                title={isCollapsed ? item.label : ''}
+              >
+                <span className="material-symbols-outlined shrink-0">{item.icon}</span>
+                {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.label}</span>}
+
+                {/* Tooltip for collapsed state */}
+                {isCollapsed && (
+                  <div className="absolute left-full ml-4 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                    {item.label}
+                  </div>
+                )}
+              </NavLink>
+            ))}
+          </nav>
+
+          {/* User Profile */}
+          <div className={`mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 relative`}>
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 rounded-xl transition-colors text-left`}
+            >
+              <div
+                className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm shrink-0"
+                style={{ backgroundImage: `url('${profile.avatarUrl}')` }}
+              />
+              {!isCollapsed && (
+                <>
+                  <div className="flex flex-col flex-1 overflow-hidden">
+                    <p className="text-sm font-bold text-gray-900 dark:text-white truncate">{profile.name}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{profile.isPro ? 'Pro Member' : 'Free Plan'}</p>
+                  </div>
+                  <span className="material-symbols-outlined text-gray-400 shrink-0">more_vert</span>
+                </>
+              )}
+            </button>
+
+            {/* Dropdown Menu */}
+            {isMenuOpen && (
+              <div className={`absolute bottom-full ${isCollapsed ? 'left-full ml-4 w-56' : 'left-0 w-full'} mb-2 bg-white dark:bg-card-dark rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden animate-fade-in-up z-50`}>
+                <div className="p-1">
+                  <NavLink
+                    to="/settings/profile"
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 rounded-lg w-full"
+                    onClick={() => { setIsMenuOpen(false); closeMobileMenu(); }}
+                  >
+                    <span className="material-symbols-outlined text-lg">person</span>
+                    Profile Settings
+                  </NavLink>
+                  <button
+                    onClick={() => {
+                      import('../utils/storage').then(({ clearUserSession }) => clearUserSession());
+                    }}
+                    className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg w-full text-left"
+                  >
+                    <span className="material-symbols-outlined text-lg">logout</span>
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
     </>
