@@ -4,7 +4,7 @@ import { SettingsSidebar } from './SettingsSidebar';
 
 export const SettingsLayout: React.FC = () => {
     return (
-        <div className="flex-1 flex overflow-hidden h-full bg-gray-50/50 dark:bg-background-dark animate-fade-in-up">
+        <div className="flex-1 flex overflow-hidden h-full bg-gray-50/50 dark:bg-background-dark">
             <SettingsSidebar />
             <Outlet />
         </div>
