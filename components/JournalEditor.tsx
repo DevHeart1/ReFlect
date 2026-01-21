@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment, generateDeepReflectPrompt } from '../services/geminiService';
+import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment, generateDeepReflectPrompt, evaluateGoalProgress, MoodCheckin } from '../services/geminiService';
 import { RichTextEditor } from './editor/RichTextEditor';
 import { Template } from '../types';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -28,7 +28,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const userProfile = getUserProfile();
 
   // AI State (Store)
-  const { isDeepReflectMode, deepReflectStage, setDeepReflectMode, dailyContext, addDailyContext } = useAIStore();
+  const { isDeepReflectMode, deepReflectStage, setDeepReflectMode, dailyContext, addDailyContext, longTermGoal, goalStatus, setGoalStatus } = useAIStore();
 
   const [prompts, setPrompts] = useState<string[]>([]);
   const [sentiment, setSentiment] = useState({ label: 'Neutral', score: 50, color: 'text-gray-500' });
@@ -36,6 +36,21 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const [isPromptsLoading, setIsPromptsLoading] = useState(true);
 
   const editorRef = useRef<any>(null);
+
+  // Fetch recent moods for goal analysis
+  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(10).toArray()) as unknown as MoodCheckin[] || [];
+
+  // Evaluate Goal Progress
+  useEffect(() => {
+    const checkGoal = async () => {
+      if (longTermGoal && recentMoods.length > 0) {
+        // Only re-evaluate if we don't have a recent status or forced reload (for now, run on mount)
+        const analysis = await evaluateGoalProgress(longTermGoal, recentMoods);
+        setGoalStatus(analysis);
+      }
+    };
+    checkGoal();
+  }, [longTermGoal, recentMoods.length]); // Simple dependency for now
 
   // Initialize Prompts on Mount (or Mode Change)
   useEffect(() => {
@@ -322,6 +337,46 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+
+            {/* Goal Setting (If none) */}
+            {!longTermGoal && (
+              <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-card-dark rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/20">
+                <div className="flex items-center gap-2 mb-2 text-indigo-600 dark:text-indigo-400">
+                  <span className="material-symbols-outlined text-sm">flag</span>
+                  <span className="text-xs font-bold uppercase">Set a Focus Goal</span>
+                </div>
+                <input
+                  type="text"
+                  placeholder="e.g. Reduce anxiety..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const val = e.currentTarget.value;
+                      if (val.trim()) useAIStore.getState().setLongTermGoal(val.trim());
+                    }
+                  }}
+                  className="w-full bg-white dark:bg-gray-800 text-sm p-2 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                />
+              </div>
+            )}
+            {/* Goal Tracker Widget */}
+            {longTermGoal && goalStatus && (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Goal</p>
+                <div className={`bg-white dark:bg-card-dark border rounded-2xl p-4 shadow-sm relative overflow-hidden group ${goalStatus.status === 'at_risk' ? 'border-red-200 dark:border-red-900/30' : goalStatus.status === 'needs_attention' ? 'border-amber-200 dark:border-amber-900/30' : 'border-emerald-200 dark:border-emerald-900/30'}`}>
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate" title={longTermGoal}>{longTermGoal}</h4>
+                    <span className={`material-symbols-outlined text-lg ${goalStatus.status === 'at_risk' ? 'text-red-500' : goalStatus.status === 'needs_attention' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      {goalStatus.status === 'at_risk' ? 'warning' : goalStatus.status === 'needs_attention' ? 'priority_high' : 'check_circle'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">{goalStatus.insight}</p>
+                  <div className={`text-[10px] font-bold px-2 py-1 rounded-lg inline-block ${goalStatus.status === 'at_risk' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                    Tip: {goalStatus.suggestion}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Real-time Sentiment Analysis */}
             <div className="flex flex-col gap-3">
               <div className="flex justify-between items-center">

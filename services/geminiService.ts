@@ -7,7 +7,7 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 // Initialize AI with Thinking Model Configuration
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-const MODEL_NAME = 'gemini-2.0-flash-thinking-exp-01-21'; // Using the latest preview model
+const MODEL_NAME = 'gemini-3-flash-preview'; // Using the latest stable flash model
 const DEFAULT_CONFIG = {
   thinkingConfig: {
     thinkingLevel: 'HIGH' as const,
@@ -261,5 +261,42 @@ export const synthesizeDeepReflectSession = async (responses: string[]): Promise
     return await generateContent(prompt, "You are a biographer summarizing a day in the life.");
   } catch {
     return "You've captured some meaningful moments today. Read them back to see your journey.";
+  }
+};
+
+export interface GoalAnalysis {
+  status: 'on_track' | 'needs_attention' | 'at_risk';
+  insight: string;
+  suggestion: string;
+}
+
+export const evaluateGoalProgress = async (goal: string, recentMoods: any[]): Promise<GoalAnalysis> => {
+  if (!ai || !goal) return { status: 'on_track', insight: 'Keep pushing towards your goal.', suggestion: 'Stay consistent.' };
+
+  const moodSummary = recentMoods.slice(0, 5).map(m => `Mood: ${m.mood}, Note: ${m.note}`).join('\n');
+
+  const prompt = `
+  Evaluate the user's progress towards their goal: "${goal}" based on their last 5 mood entries.
+  Mood Data:
+  ${moodSummary}
+
+  Determine:
+  1. Status (on_track, needs_attention, at_risk)
+  2. Insight (Why?)
+  3. Suggestion (What to do?)
+
+  Return strictly JSON:
+  {
+    "status": "on_track",
+    "insight": "...",
+    "suggestion": "..."
+  }
+  `;
+
+  try {
+    const result = await generateContent(prompt, "You are a goal accountability coach. Respond ONLY in JSON.", true);
+    return JSON.parse(result);
+  } catch (e) {
+    return { status: 'on_track', insight: 'Consistency is key.', suggestion: 'Keep tracking your progress.' };
   }
 };
