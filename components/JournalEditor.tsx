@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { generateMindfulnessPrompt } from '../services/geminiService';
+import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment } from '../services/geminiService';
 import { RichTextEditor } from './editor/RichTextEditor';
 import { Template } from '../types';
 
@@ -16,12 +16,18 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const [title, setTitle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+
+  // AI State
   const [prompts, setPrompts] = useState<string[]>([
     'What is the smallest step you can take right now?',
     'How does your body feel in this moment?'
   ]);
+  const [sentiment, setSentiment] = useState({ label: 'Neutral', score: 50, color: 'text-gray-500' });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const editorRef = useRef<any>(null);
+
+  // ... (Keep existing template loading logic) ...
 
   // Handle URL Prompts and Templates
   useEffect(() => {
@@ -49,10 +55,6 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
           }
         }).join('');
       } else {
-        // Fallback for hardcoded templates like 'gratitude' that might not have 'blocks' defined in the generic way yet
-        // In the updated Types, 'gratitude' card doesn't have blocks, but we can infer or leave empty.
-        // Actually, the user wants "functional logic". 
-        // If I want 'gratitude' to work, I should probably standardise it or handle it here.
         if (template.id === 'gratitude') {
           initialContent = "<h2>Today I am grateful for:</h2><ol><li><p></p></li><li><p></p></li><li><p></p></li></ol>";
         } else if (template.id === 'morning') {
@@ -85,12 +87,13 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const handleRefreshPrompts = async () => {
     setIsGenerating(true);
     try {
-      const p1 = await generateMindfulnessPrompt();
-      const p2 = await generateMindfulnessPrompt();
+      // Generate prompts based on current content context
+      const plainText = content.replace(/<[^>]+>/g, '');
+      const p1 = await generateThoughts(plainText);
+      const p2 = await generateThoughts(plainText); // Can be optimized to single call returning multiple if service supported it
       setPrompts([p1, p2]);
     } catch (e) {
       console.error(e);
-      // Fallback prompts if service fails or is mocked
       setPrompts([
         "What is taking up the most space in your mind right now?",
         "Describe a moment today that made you smile."
@@ -99,6 +102,21 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
       setIsGenerating(false);
     }
   };
+
+  // Analyze sentiment periodically or on demand
+  useEffect(() => {
+    const timeoutId = setTimeout(async () => {
+      if (content.length > 50) {
+        setIsAnalyzing(true);
+        const plainText = content.replace(/<[^>]+>/g, '');
+        const result = await analyzeSentiment(plainText);
+        setSentiment(result);
+        setIsAnalyzing(false);
+      }
+    }, 2000); // Debounce analysis
+
+    return () => clearTimeout(timeoutId);
+  }, [content]);
 
   const insertText = (text: string) => {
     if (editorRef.current) {
@@ -245,26 +263,36 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
             {/* Real-time Sentiment Analysis */}
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Vibe</p>
+              <div className="flex justify-between items-center">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Vibe</p>
+                {isAnalyzing && <span className="text-[10px] text-primary animate-pulse">Analyzing...</span>}
+              </div>
               <div className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm relative overflow-hidden group">
-                {/* Decorative gradient blur */}
-                <div className="absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 bg-primary/10 rounded-full blur-2xl group-hover:bg-primary/20 transition-all"></div>
+                {/* Decorative gradient blur based on sentiment color */}
+                <div className={`absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 opacity-10 rounded-full blur-2xl transition-all ${sentiment.color.replace('text-', 'bg-')}`}></div>
+
                 <div className="flex items-center gap-3 mb-3 relative z-10">
-                  <div className="size-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center">
-                    <span className="material-symbols-outlined">spa</span>
+                  <div className={`size-10 rounded-full flex items-center justify-center ${sentiment.color.replace('text-', 'bg-').replace('500', '50')} ${sentiment.color}`}>
+                    <span className="material-symbols-outlined">
+                      {sentiment.score > 70 ? 'sentiment_very_satisfied' : sentiment.score > 40 ? 'sentiment_satisfied' : 'sentiment_dissatisfied'}
+                    </span>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-800 dark:text-gray-200">Calm & Focused</p>
-                    <p className="text-xs text-gray-500">Stability detected</p>
+                    <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{sentiment.label}</p>
+                    <p className="text-xs text-gray-500">{sentiment.score}% Intensity</p>
                   </div>
                 </div>
-                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1">
-                  <div className="bg-green-500 h-1.5 rounded-full" style={{ width: '75%' }}></div>
+
+                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1 overflow-hidden">
+                  <div
+                    className={`h-1.5 rounded-full transition-all duration-1000 ${sentiment.color.replace('text-', 'bg-')}`}
+                    style={{ width: `${sentiment.score}%` }}
+                  ></div>
                 </div>
                 <div className="flex justify-between text-[10px] text-gray-400 font-medium">
-                  <span>Anxious</span>
-                  <span>Neutral</span>
-                  <span>Serene</span>
+                  <span>Low</span>
+                  <span>Moderate</span>
+                  <span>High</span>
                 </div>
               </div>
             </div>

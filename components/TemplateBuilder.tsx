@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Template, TemplateBlock } from '../types';
 import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
+import { generateTemplateStructure } from '../services/geminiService';
 
 interface TemplateBuilderProps {
   onBack: () => void;
@@ -18,6 +19,11 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
   const [selectedIcon, setSelectedIcon] = useState('edit_note');
   const [showIconPicker, setShowIconPicker] = useState(false);
 
+  // Magic Create State
+  const [showMagicModal, setShowMagicModal] = useState(false);
+  const [magicPrompt, setMagicPrompt] = useState('');
+  const [isMagicLoading, setIsMagicLoading] = useState(false);
+
   const colors = [
     { name: 'Blue', class: 'text-blue-500', bg: 'bg-blue-500', theme: { text: 'text-blue-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-blue-50 dark:bg-blue-500/10', groupHoverText: 'group-hover:text-blue-500', gradient: 'from-blue-500/5' } },
     { name: 'Amber', class: 'text-amber-500', bg: 'bg-amber-500', theme: { text: 'text-amber-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-amber-50 dark:bg-amber-500/10', groupHoverText: 'group-hover:text-amber-500', gradient: 'from-amber-500/5' } },
@@ -25,6 +31,26 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
     { name: 'Indigo', class: 'text-indigo-500', bg: 'bg-indigo-500', theme: { text: 'text-indigo-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-indigo-50 dark:bg-indigo-500/10', groupHoverText: 'group-hover:text-indigo-500', gradient: 'from-indigo-500/5' } },
     { name: 'Emerald', class: 'text-emerald-500', bg: 'bg-emerald-500', theme: { text: 'text-emerald-500', bg: 'bg-card-light dark:bg-card-dark', iconBg: 'bg-emerald-50 dark:bg-emerald-500/10', groupHoverText: 'group-hover:text-emerald-500', gradient: 'from-emerald-500/5' } },
   ];
+
+  const handleMagicCreate = async () => {
+    if (!magicPrompt.trim()) return;
+    setIsMagicLoading(true);
+    try {
+      const newBlocks = await generateTemplateStructure(magicPrompt);
+      if (newBlocks && newBlocks.length > 0) {
+        setBlocks(newBlocks);
+        setTemplateName(magicPrompt.split(' ').slice(0, 3).join(' ') + ' Template'); // Guess a title
+        setShowMagicModal(false);
+      } else {
+        alert("Could not generate a template. Try a more specific description.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("AI generation failed. Please try again.");
+    } finally {
+      setIsMagicLoading(false);
+    }
+  };
 
   const addBlock = (type: TemplateBlock['type']) => {
     const newBlock: TemplateBlock = {
@@ -130,6 +156,13 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
           <div className="text-sm font-medium text-gray-400">/ Templates / <span className="text-gray-900 dark:text-gray-200">{templateName || 'Untitled'}</span></div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowMagicModal(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-gradient-to-r from-violet-500 to-indigo-500 text-white rounded shadow-sm hover:shadow-md transition-all"
+          >
+            <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+            Magic Create
+          </button>
           <button
             onClick={handleSave}
             className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded shadow-sm hover:bg-primary/90 transition-colors"
@@ -378,6 +411,62 @@ export const TemplateBuilder: React.FC<TemplateBuilderProps> = ({ onBack, onSave
             >
               Go to Templates
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Magic Create Modal */}
+      {showMagicModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMagicModal(false)} />
+          <div className="relative bg-white dark:bg-[#202020] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col animate-fade-in-up border border-indigo-100 dark:border-indigo-900/30">
+            <div className="p-6 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-900/10 dark:to-violet-900/10 border-b border-indigo-100 dark:border-indigo-900/20">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg text-indigo-600 dark:text-indigo-400">
+                  <span className="material-symbols-outlined text-xl">auto_awesome</span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Magic Create</h3>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                Describe your ideal journaling routine, and our AI will build a custom template structure for you instantly.
+              </p>
+            </div>
+
+            <div className="p-6 flex flex-col gap-4">
+              <textarea
+                value={magicPrompt}
+                onChange={(e) => setMagicPrompt(e.target.value)}
+                placeholder="e.g., A stoic evening reflection focusing on what I couldn't control..."
+                className="w-full h-32 p-4 rounded-xl bg-gray-50 dark:bg-black/20 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none text-sm"
+                autoFocus
+              />
+
+              <div className="flex justify-end gap-3 mt-2">
+                <button
+                  onClick={() => setShowMagicModal(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleMagicCreate}
+                  disabled={!magicPrompt.trim() || isMagicLoading}
+                  className="px-5 py-2 rounded-lg text-sm font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:shadow-none flex items-center gap-2"
+                >
+                  {isMagicLoading ? (
+                    <>
+                      <span className="material-symbols-outlined text-[16px] animate-spin">refresh</span>
+                      Building...
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[16px]">draw</span>
+                      Generate Template
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
