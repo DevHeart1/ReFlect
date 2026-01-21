@@ -173,3 +173,57 @@ export const generateYearlySummary = async (stats: any): Promise<string> => {
     return `You have logged ${stats.total} entries this year. Keep documenting your journey to unlock deeper insights.`;
   }
 };
+
+export interface WeeklyReport {
+  weekStarting: string;
+  themes: string[];
+  triggers: string[];
+  insight: string;
+  strategy: string;
+  selfAudit: string;
+}
+
+export const generateWeeklyReport = async (entries: any[], moods: any[]): Promise<WeeklyReport | null> => {
+  if (!ai || (entries.length === 0 && moods.length === 0)) return null;
+
+  // Prepare context
+  const entryText = entries.map(e => `[${new Date(e.date).toLocaleDateString()}] ${e.title}: ${e.excerpt}`).join('\n');
+  const moodText = moods.map(m => `[${new Date(m.date).toLocaleDateString()}] Mood: ${m.mood} (Val: ${m.moodValue}) - Factors: ${m.factors.join(', ')}`).join('\n');
+
+  const prompt = `
+  Perform a deep, multi-level psychological analysis on this user's week to generate a "Weekly Inner Report".
+  
+  DATA:
+  Journal Entries:
+  ${entryText}
+
+  Mood Logs:
+  ${moodText}
+
+  Thinking Process (Simulate this internally):
+  Level 1: Understanding - What happened?
+  Level 2: Pattern Recognition - What repeats?
+  Level 3: Insight Generation - Why does it happen?
+  Level 4: Strategy Proposal - What to do next?
+  Level 5: Self-Audit - Verify alignment.
+
+  OUTPUT:
+  Return strictly a JSON object with this structure:
+  {
+    "weekStarting": "${new Date().toLocaleDateString()}",
+    "themes": ["Theme 1", "Theme 2"],
+    "triggers": ["Trigger 1", "Trigger 2"],
+    "insight": "A profound observation about the user's emotional state (Level 3).",
+    "strategy": "A concrete, actionable strategy for next week (Level 4).",
+    "selfAudit": "A brief meta-comment on confidence level of this analysis."
+  }
+  `;
+
+  try {
+    const result = await generateContent(prompt, "You are an expert psychologist AI agent. Respond ONLY in valid JSON.", true);
+    return JSON.parse(result);
+  } catch (e) {
+    console.error("Weekly report generation failed", e);
+    return null;
+  }
+};
