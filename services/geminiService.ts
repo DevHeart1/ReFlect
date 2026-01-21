@@ -343,3 +343,68 @@ export const generatePatternInsights = async (recentMoods: MoodCheckin[]): Promi
     };
   }
 };
+
+export interface DailyQuote {
+  quote: string;
+  author: string;
+}
+
+export const generateDailyQuote = async (): Promise<DailyQuote> => {
+  if (!ai) {
+    return { quote: "The only way to do great work is to love what you do.", author: "Steve Jobs" };
+  }
+
+  const prompt = `
+  Generate ONE inspirational quote related to mindfulness, self-reflection, gratitude, or personal growth.
+  Return strictly JSON:
+  {
+    "quote": "...",
+    "author": "..."
+  }
+  `;
+
+  try {
+    const result = await generateContent(prompt, "You are a wise philosopher. Respond ONLY in JSON.", true);
+    return JSON.parse(result);
+  } catch (e) {
+    return { quote: "The mind is everything. What you think you become.", author: "Buddha" };
+  }
+};
+
+export interface QuickPrompt {
+  icon: string;
+  color: string;
+  text: string;
+  promptType: string;
+}
+
+export const generateQuickPrompts = async (): Promise<QuickPrompt[]> => {
+  if (!ai) {
+    return [
+      { icon: 'spark', color: 'purple', text: 'What is on your mind?', promptType: 'feeling' },
+      { icon: 'bedtime', color: 'blue', text: 'Did you dream last night?', promptType: 'dream' },
+      { icon: 'favorite', color: 'pink', text: 'Name something you are thankful for.', promptType: 'gratitude' }
+    ];
+  }
+
+  const prompt = `
+  Generate 3 SHORT journaling prompts (max 8 words each) for a mindfulness app.
+  Return strictly JSON array:
+  [
+    { "icon": "spark", "color": "purple", "text": "...", "promptType": "feeling" },
+    { "icon": "bedtime", "color": "blue", "text": "...", "promptType": "dream" },
+    { "icon": "favorite", "color": "pink", "text": "...", "promptType": "gratitude" }
+  ]
+  `;
+
+  try {
+    const result = await generateContent(prompt, "You are a mindfulness coach. Respond ONLY in JSON.", true);
+    return JSON.parse(result);
+  } catch (e) {
+    return [
+      { icon: 'spark', color: 'purple', text: 'What is on your mind?', promptType: 'feeling' },
+      { icon: 'bedtime', color: 'blue', text: 'Did you dream last night?', promptType: 'dream' },
+      { icon: 'favorite', color: 'pink', text: 'Name something you are thankful for.', promptType: 'gratitude' }
+    ];
+  }
+};

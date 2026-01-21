@@ -482,7 +482,7 @@ export const PersonalInsights: React.FC = () => {
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic border-l-4 border-primary pl-4">
                 "{aiAnalysis}"
               </p>
-              <p className="text-xs text-gray-400 mt-2 text-right">- Your AI Companion</p>
+              <p className="text-xs text-gray-400 mt-2 text-right">- Judy</p>
             </div>
           ) : (
             <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-xl">

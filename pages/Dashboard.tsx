@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoodChart } from '../components/MoodChart';
 import { RecentEntries } from '../components/RecentEntries';
 import { JournalEntry } from '../types';
+import { generateDailyQuote, generateQuickPrompts, DailyQuote, QuickPrompt } from '../services/geminiService';
 
 interface DashboardProps {
     entries: JournalEntry[];
@@ -10,7 +11,20 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
     const navigate = useNavigate();
+    const [quote, setQuote] = useState<DailyQuote | null>(null);
+    const [quickPrompts, setQuickPrompts] = useState<QuickPrompt[] | null>(null);
 
+    useEffect(() => {
+        const fetchAIContent = async () => {
+            const [fetchedQuote, fetchedPrompts] = await Promise.all([
+                generateDailyQuote(),
+                generateQuickPrompts()
+            ]);
+            setQuote(fetchedQuote);
+            setQuickPrompts(fetchedPrompts);
+        };
+        fetchAIContent();
+    }, []);
     return (
         <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
             {/* 1. Header Section (Greeting) */}
@@ -32,13 +46,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                 </div>
             </section>
 
-            {/* 2. Daily Quote Section (Dedicated) */}
+            {/* 2. Daily Quote Section (AI Generated) */}
             <section className="bg-gradient-to-r from-primary/5 to-transparent border-l-4 border-primary p-6 rounded-r-xl animate-fade-in-up delay-75 shadow-sm">
                 <div className="flex items-start gap-4">
                     <span className="material-symbols-outlined text-primary text-3xl mt-1">format_quote</span>
                     <div>
-                        <p className="text-xl font-serif text-gray-800 dark:text-gray-200 italic leading-relaxed">"The unexamined life is not worth living."</p>
-                        <p className="text-sm font-bold text-gray-500 mt-2 tracking-wide uppercase">— Socrates</p>
+                        <p className="text-xl font-serif text-gray-800 dark:text-gray-200 italic leading-relaxed">
+                            {quote ? `"${quote.quote}"` : <span className="animate-pulse">Loading...</span>}
+                        </p>
+                        <p className="text-sm font-bold text-gray-500 mt-2 tracking-wide uppercase">
+                            — {quote?.author || 'AI'}
+                        </p>
                     </div>
                 </div>
             </section>
@@ -128,29 +146,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                         </div>
                     </div>
 
-                    {/* AI Chips */}
+                    {/* AI Chips (Dynamically Generated) */}
                     <div className="flex flex-wrap gap-3">
-                        <button
-                            onClick={() => navigate('/editor?prompt=feeling')}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
-                        >
-                            <span className="material-symbols-outlined text-purple-400 group-hover:text-purple-500 text-[20px]">spark</span>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">How are you feeling right now?</span>
-                        </button>
-                        <button
-                            onClick={() => navigate('/editor?prompt=dream')}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
-                        >
-                            <span className="material-symbols-outlined text-blue-400 group-hover:text-blue-500 text-[20px]">bedtime</span>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Record last night's dream</span>
-                        </button>
-                        <button
-                            onClick={() => navigate('/editor?prompt=gratitude')}
-                            className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
-                        >
-                            <span className="material-symbols-outlined text-pink-400 group-hover:text-pink-500 text-[20px]">favorite</span>
-                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200">List 3 things you're grateful for</span>
-                        </button>
+                        {quickPrompts ? quickPrompts.map((p, i) => (
+                            <button
+                                key={i}
+                                onClick={() => navigate(`/editor?prompt=${p.promptType}`)}
+                                className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-card-dark rounded-lg border border-gray-100 dark:border-gray-700 shadow-sm hover:border-primary/30 hover:shadow-md transition-all group"
+                            >
+                                <span className={`material-symbols-outlined text-${p.color}-400 group-hover:text-${p.color}-500 text-[20px]`}>{p.icon}</span>
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{p.text}</span>
+                            </button>
+                        )) : (
+                            <span className="text-sm text-gray-400 animate-pulse">Loading prompts...</span>
+                        )}
                     </div>
                 </div>
 
