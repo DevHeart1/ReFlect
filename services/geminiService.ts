@@ -300,3 +300,46 @@ export const evaluateGoalProgress = async (goal: string, recentMoods: any[]): Pr
     return { status: 'on_track', insight: 'Consistency is key.', suggestion: 'Keep tracking your progress.' };
   }
 };
+
+export interface PatternInsights {
+  weeklyInsight: string;
+  topFactorInsight: string;
+}
+
+export const generatePatternInsights = async (recentMoods: MoodCheckin[]): Promise<PatternInsights> => {
+  if (!ai || recentMoods.length === 0) {
+    return {
+      weeklyInsight: 'Log more entries to unlock AI pattern detection.',
+      topFactorInsight: 'Add factors to your mood entries to see what influences your well-being.'
+    };
+  }
+
+  const moodSummary = recentMoods.slice(0, 10).map(m =>
+    `Date: ${new Date(m.date).toLocaleDateString()} (${new Date(m.date).toLocaleDateString('en-US', { weekday: 'short' })}) | Mood: ${m.mood} | Factors: ${m.factors.join(', ')}`
+  ).join('\n');
+
+  const prompt = `
+  Analyze these mood check-ins to identify patterns:
+  ${moodSummary}
+
+  Generate TWO insights:
+  1. weeklyInsight: A pattern about days of the week (e.g., "You feel happiest on weekends").
+  2. topFactorInsight: The most impactful factor and why (e.g., "Sleep correlates strongly with positive moods").
+
+  Return strictly JSON:
+  {
+    "weeklyInsight": "...",
+    "topFactorInsight": "..."
+  }
+  `;
+
+  try {
+    const result = await generateContent(prompt, "You are an emotional pattern analyst. Respond ONLY in JSON.", true);
+    return JSON.parse(result);
+  } catch (e) {
+    return {
+      weeklyInsight: 'Keep logging to reveal your weekly patterns.',
+      topFactorInsight: 'Your factors will reveal themselves with more data.'
+    };
+  }
+};

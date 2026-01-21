@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
 import { MoodCheckin } from '../utils/storage';
-import { generateMoodInsights } from '../services/geminiService';
+import { generateMoodInsights, generatePatternInsights, PatternInsights } from '../services/geminiService';
 
 type TimeRange = '30days' | '3months';
 
@@ -15,10 +15,22 @@ export const PersonalInsights: React.FC = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [patternInsights, setPatternInsights] = useState<PatternInsights | null>(null);
 
   useEffect(() => {
     filterData();
   }, [entries, timeRange]);
+
+  // Fetch AI Pattern Insights
+  useEffect(() => {
+    const fetchPatterns = async () => {
+      if (filteredEntries.length > 0 && !patternInsights) {
+        const insights = await generatePatternInsights(filteredEntries as any);
+        setPatternInsights(insights);
+      }
+    };
+    fetchPatterns();
+  }, [filteredEntries]);
 
   const filterData = () => {
     if (entries.length === 0) return;
@@ -378,7 +390,7 @@ export const PersonalInsights: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Pattern 1: Most Productive Day */}
+            {/* Pattern 1: Weekly Insight */}
             <div className="bg-gradient-to-br from-blue-50 to-white dark:from-gray-800 dark:to-card-dark p-5 rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700/50">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 rounded-lg">
@@ -387,11 +399,11 @@ export const PersonalInsights: React.FC = () => {
                 <h4 className="font-bold text-gray-800 dark:text-gray-100">Weekly Insight</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                You seem to check in most frequently on <span className="font-bold text-blue-600 dark:text-blue-400">Mondays</span>. Starting the week with reflection is a great habit!
+                {patternInsights ? patternInsights.weeklyInsight : <span className="animate-pulse">Analyzing patterns...</span>}
               </p>
             </div>
 
-            {/* Pattern 2: Common Factor */}
+            {/* Pattern 2: Top Factor */}
             <div className="bg-gradient-to-br from-purple-50 to-white dark:from-gray-800 dark:to-card-dark p-5 rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700/50">
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2 bg-purple-100 dark:bg-purple-900/30 text-purple-600 rounded-lg">
@@ -400,10 +412,7 @@ export const PersonalInsights: React.FC = () => {
                 <h4 className="font-bold text-gray-800 dark:text-gray-100">Top Factor</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {filteredEntries.length > 0 && filteredEntries[0].factors.length > 0
-                  ? <span>Your most recent check-in highlighted <span className="font-bold text-purple-600">"{filteredEntries[0].factors[0]}"</span> as a key factor.</span>
-                  : "Log more entries with factors (e.g. Work, Sleep) to unlock factor analysis."
-                }
+                {patternInsights ? patternInsights.topFactorInsight : <span className="animate-pulse">Analyzing factors...</span>}
               </p>
             </div>
           </div>
