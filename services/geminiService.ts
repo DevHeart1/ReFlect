@@ -124,3 +124,52 @@ export const generateTemplateStructure = async (description: string): Promise<Te
   }
 };
 
+
+export interface MoodCheckin {
+  id: string;
+  date: string;
+  mood: string;
+  moodValue: number;
+  secondaryEmotions: string[];
+  factors: string[];
+  note: string;
+}
+
+export const generateMoodInsights = async (recentMoods: MoodCheckin[]): Promise<string> => {
+  if (!ai || recentMoods.length === 0) {
+    return "Consistent tracking unlocks AI insights about your emotional patterns.";
+  }
+
+  // Summarize the data for the prompt to save tokens/make it readable
+  const summary = recentMoods.map(m =>
+    `${new Date(m.date).toLocaleDateString()}: ${m.mood} (${m.secondaryEmotions.join(', ')}) - Factors: ${m.factors.join(', ')}. Note: "${m.note}"`
+  ).join('\n');
+
+  const prompt = `Based on these recent mood check-ins:\n${summary}\n\nProvide a single, short (2 sentences max), empathetic insight or observation about the user's emotional trends. Focus on patterns or positive reinforcement.`;
+
+  try {
+    return await generateContent(prompt, "You are an insightful and empathetic therapist assistant.");
+  } catch {
+    return "Notice how your mood shifts throughout the week? Keep tracking to see more patterns.";
+  }
+};
+
+export const generateYearlySummary = async (stats: any): Promise<string> => {
+  if (!ai) return "Keep documenting your journey to unlock deeper insights.";
+
+  // We can pass a simplified version of stats
+  const prompt = `Generate a warm, celebratory yearly summary (approx 30-40 words) for a user's year in review.
+    Stats:
+    - Total Entries: ${stats.total}
+    - Top Mood: ${stats.topMoods[0]?.mood || 'N/A'}
+    - Streak: ${stats.streak} days
+    - Key Themes: ${stats.topMoods.map((m: any) => m.mood).join(', ')}
+    
+    Make it personal and encouraging.`;
+
+  try {
+    return await generateContent(prompt, "You are a warm, encouraging life coach.");
+  } catch {
+    return `You have logged ${stats.total} entries this year. Keep documenting your journey to unlock deeper insights.`;
+  }
+};

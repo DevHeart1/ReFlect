@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
 import { Dialog } from './Dialog';
 import { exportToJSON, exportToPDF } from '../utils/export';
 import { analyzeMoods, MoodStats } from '../utils/analytics';
+import { generateYearlySummary } from '../services/geminiService';
 
 export const YearReport: React.FC = () => {
   const [showExportDialog, setShowExportDialog] = useState(false);
@@ -11,7 +12,20 @@ export const YearReport: React.FC = () => {
 
   const stats = useMemo(() => analyzeMoods(checkins), [checkins]);
 
-  // if (!stats) return null; // analyzeMoods always returns object now
+  const [summary, setSummary] = useState("");
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+
+  useEffect(() => {
+    if (stats && stats.total > 0) {
+      setIsLoadingSummary(true);
+      generateYearlySummary(stats).then((text) => {
+        setSummary(text);
+        setIsLoadingSummary(false);
+      });
+    } else {
+      setSummary("Start logging your moods to see a yearly summary.");
+    }
+  }, [stats]);
 
 
   return (
@@ -50,11 +64,16 @@ export const YearReport: React.FC = () => {
               <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI Growth Synthesis</h3>
             </div>
             <div className="space-y-4">
-              <p className="text-xl font-medium leading-relaxed text-gray-800 dark:text-gray-200">
-                "You have logged <span className="text-primary dark:text-blue-300">{stats.total} entries</span> this year.
-                {stats.topMoods.length > 0 && <> Your most frequent mood was <span className="font-bold">{stats.topMoods[0].mood}</span>.</>}
-                Keep documenting your journey to unlock deeper insights."
-              </p>
+              {isLoadingSummary ? (
+                <div className="flex items-center gap-2 text-gray-500 animate-pulse">
+                  <span className="material-symbols-outlined animate-spin">refresh</span>
+                  <span>Generating your yearly review...</span>
+                </div>
+              ) : (
+                <p className="text-xl font-medium leading-relaxed text-gray-800 dark:text-gray-200">
+                  "{summary}"
+                </p>
+              )}
             </div>
           </div>
         </section>

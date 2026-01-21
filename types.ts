@@ -1,5 +1,6 @@
 export interface JournalEntry {
   id: string;
+  userId?: string; // For auth integration
   title: string;
   excerpt: string;
   date: string;

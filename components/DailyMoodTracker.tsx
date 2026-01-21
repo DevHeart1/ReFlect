@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog } from './Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
 import { getMoodValue } from '../utils/storage';
+import { generateMoodInsights, MoodCheckin } from '../services/geminiService';
 
 export const DailyMoodTracker: React.FC = () => {
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
@@ -10,8 +11,21 @@ export const DailyMoodTracker: React.FC = () => {
   const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
   const [note, setNote] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [insight, setInsight] = useState("Analyzing your recent emotional patterns...");
+  const [isInsightLoading, setIsInsightLoading] = useState(false);
 
-  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(5).toArray()) || [];
+  // Cast recentMoods to compatible type if needed, or rely on duck typing since Dexie returns objects
+  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(5).toArray()) as unknown as MoodCheckin[] || [];
+
+  useEffect(() => {
+    if (recentMoods.length > 0) {
+      setIsInsightLoading(true);
+      generateMoodInsights(recentMoods).then(text => {
+        setInsight(text);
+        setIsInsightLoading(false);
+      }).catch(() => setIsInsightLoading(false));
+    }
+  }, [recentMoods]);
 
   const moods = [
     { label: 'Radiant', icon: 'sunny', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-400', ring: 'ring-amber-400' },
@@ -247,12 +261,18 @@ export const DailyMoodTracker: React.FC = () => {
             </div>
 
             <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
-              <div className="bg-primary/5 rounded-xl p-4 flex gap-3 items-start">
+              <div className="bg-primary/5 rounded-xl p-4 flex gap-3 items-start relative overflow-hidden">
+                {/* Loader overlay */}
+                {isInsightLoading && (
+                  <div className="absolute inset-0 bg-white/50 dark:bg-black/20 flex items-center justify-center backdrop-blur-[1px]">
+                    <span className="material-symbols-outlined text-primary animate-spin text-xl">refresh</span>
+                  </div>
+                )}
                 <span className="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
                 <div>
-                  <p className="text-xs font-bold text-primary uppercase mb-1">Insight</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    Consistent tracking unlocks AI insights about your emotional patterns.
+                  <p className="text-xs font-bold text-primary uppercase mb-1">AI Pattern Recognition</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic">
+                    "{insight}"
                   </p>
                 </div>
               </div>

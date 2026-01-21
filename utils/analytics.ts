@@ -85,3 +85,42 @@ export const analyzeMoods = (checkins: MoodCheckin[]): MoodStats => {
         heatmap
     };
 };
+
+import { JournalEntry } from '../types';
+
+export const calculateJournalStreak = (entries: JournalEntry[]): number => {
+    if (!entries || entries.length === 0) return 0;
+
+    const today = new Date().setHours(0, 0, 0, 0);
+    // Sort descending
+    const dates = entries
+        .map(e => new Date(e.date).setHours(0, 0, 0, 0))
+        .sort((a, b) => b - a);
+
+    const uniqueDates = Array.from(new Set(dates));
+
+    if (uniqueDates.length === 0) return 0;
+
+    let streak = 0;
+
+    // Check if streak is active (today or yesterday)
+    const lastEntryDate = uniqueDates[0];
+    const diffToToday = (today - lastEntryDate) / (1000 * 60 * 60 * 24);
+
+    if (diffToToday > 1) return 0; // Streak broken
+
+    streak = 1;
+    for (let i = 0; i < uniqueDates.length - 1; i++) {
+        const current = uniqueDates[i];
+        const next = uniqueDates[i + 1];
+        const diff = (current - next) / (1000 * 60 * 60 * 24);
+
+        if (diff === 1) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+
+    return streak;
+};

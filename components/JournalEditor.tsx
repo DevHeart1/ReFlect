@@ -3,6 +3,10 @@ import { useSearchParams, useLocation } from 'react-router-dom';
 import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment } from '../services/geminiService';
 import { RichTextEditor } from './editor/RichTextEditor';
 import { Template } from '../types';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { db } from '../utils/db';
+import { calculateJournalStreak } from '../utils/analytics';
+import { getUserProfile } from '../utils/storage';
 
 interface JournalEditorProps {
   onBack: () => void;
@@ -17,18 +21,39 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
+  // Real Data Integration
+  const entries = useLiveQuery(() => db.journalEntries.toArray()) || [];
+  const writingStreak = calculateJournalStreak(entries);
+  const userProfile = getUserProfile();
+
   // AI State
-  const [prompts, setPrompts] = useState<string[]>([
-    'What is the smallest step you can take right now?',
-    'How does your body feel in this moment?'
-  ]);
+  const [prompts, setPrompts] = useState<string[]>([]);
   const [sentiment, setSentiment] = useState({ label: 'Neutral', score: 50, color: 'text-gray-500' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isPromptsLoading, setIsPromptsLoading] = useState(true);
 
   const editorRef = useRef<any>(null);
 
-  // ... (Keep existing template loading logic) ...
+  // Initialize Prompts on Mount
+  useEffect(() => {
+    const initPrompts = async () => {
+      try {
+        setIsPromptsLoading(true);
+        // Generate two initial thought-provokers
+        const p1 = await generateThoughts();
+        const p2 = await generateThoughts();
+        setPrompts([p1, p2]);
+      } catch (e) {
+        console.warn("Failed to init prompts", e);
+        setPrompts(["What is on your mind right now?", "Describe your current environment."]);
+      } finally {
+        setIsPromptsLoading(false);
+      }
+    };
+    initPrompts();
+  }, []);
 
+  // ... (Keep existing template loading logic) ...
   // Handle URL Prompts and Templates
   useEffect(() => {
     const template = location.state?.template as Template | undefined;
@@ -156,7 +181,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                 className="text-gray-900 dark:text-white text-lg font-bold leading-tight tracking-tight bg-transparent focus:outline-none focus:border-b border-primary/50"
                 placeholder="Entry Title..."
               />
-              <p className="text-gray-400 text-xs font-medium">Auto-saving...</p>
+              <p className="text-gray-400 text-xs font-medium">Auto-saving as {userProfile.name}...</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -303,53 +328,69 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                 <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Deepen Your Thought</p>
                 <button
                   onClick={handleRefreshPrompts}
-                  disabled={isGenerating}
+                  disabled={isGenerating || isPromptsLoading}
                   className="text-primary text-[10px] font-bold hover:underline disabled:opacity-50"
                 >
                   {isGenerating ? 'Thinking...' : 'Refresh'}
                 </button>
               </div>
 
-              {prompts.map((prompt, index) => (
-                <div
-                  key={index}
-                  onClick={() => handlePromptClick(prompt)}
-                  className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
-                >
-                  <div className="flex gap-3">
-                    <div className={`mt-0.5 ${index === 0 ? 'text-accent' : 'text-blue-400'}`}>
-                      <span className="material-symbols-outlined text-lg">{index === 0 ? 'lightbulb' : 'water_drop'}</span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug mb-2">{prompt}</p>
-                      <div className="flex items-center gap-1 text-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span>Click to add</span>
-                        <span className="material-symbols-outlined text-sm">add</span>
+              {isPromptsLoading ? (
+                <div className="space-y-3">
+                  <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+                  <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse delay-75"></div>
+                </div>
+              ) : prompts.length > 0 ? (
+                prompts.map((prompt, index) => (
+                  <div
+                    key={index}
+                    onClick={() => handlePromptClick(prompt)}
+                    className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
+                  >
+                    <div className="flex gap-3">
+                      <div className={`mt-0.5 ${index === 0 ? 'text-accent' : 'text-blue-400'}`}>
+                        <span className="material-symbols-outlined text-lg">{index === 0 ? 'lightbulb' : 'water_drop'}</span>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug mb-2">{prompt}</p>
+                        <div className="flex items-center gap-1 text-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                          <span>Click to add</span>
+                          <span className="material-symbols-outlined text-sm">add</span>
+                        </div>
                       </div>
                     </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-6 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl text-gray-400">
+                  <p className="text-xs">No prompts available...</p>
                 </div>
-              ))}
+              )}
             </div>
 
             {/* Stats/Widgets */}
             <div className="flex flex-col gap-3 mt-auto">
-              <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-                <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wide">Writing Streak</p>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <span className="text-3xl font-bold text-gray-800 dark:text-gray-100 font-display">12</span>
-                    <span className="text-sm text-gray-500 font-medium">days</span>
-                  </div>
-                  <div className="flex gap-1 mb-1">
-                    <div className="w-1.5 h-3 bg-primary/30 rounded-full"></div>
-                    <div className="w-1.5 h-4 bg-primary/40 rounded-full"></div>
-                    <div className="w-1.5 h-3 bg-primary/30 rounded-full"></div>
-                    <div className="w-1.5 h-6 bg-primary rounded-full"></div>
-                    <div className="w-1.5 h-4 bg-primary/30 rounded-full"></div>
+              {writingStreak > 0 ? (
+                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                  <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wide">Writing Streak</p>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <span className="text-3xl font-bold text-gray-800 dark:text-gray-100 font-display">{writingStreak}</span>
+                      <span className="text-sm text-gray-500 font-medium ml-1">days</span>
+                    </div>
+                    <div className="flex gap-1 mb-1">
+                      {[...Array(5)].map((_, i) => (
+                        <div key={i} className={`w-1.5 rounded-full ${i < Math.min(writingStreak, 5) ? 'bg-primary h-4' : 'bg-primary/20 h-2'}`}></div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-dashed border-gray-200 dark:border-gray-700 text-center">
+                  <span className="material-symbols-outlined text-gray-400 mb-1">history_edu</span>
+                  <p className="text-xs font-bold text-gray-500">Start your streak today!</p>
+                </div>
+              )}
             </div>
           </div>
         </aside>

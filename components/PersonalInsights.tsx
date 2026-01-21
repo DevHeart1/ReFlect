@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
 import { MoodCheckin } from '../utils/storage';
+import { generateMoodInsights } from '../services/geminiService';
 
 type TimeRange = '30days' | '3months';
 
@@ -12,6 +13,8 @@ export const PersonalInsights: React.FC = () => {
   const [streak, setStreak] = useState(0);
   const [topEmotion, setTopEmotion] = useState<{ label: string; count: number }>({ label: 'N/A', count: 0 });
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     filterData();
@@ -411,13 +414,13 @@ export const PersonalInsights: React.FC = () => {
             <div className="overflow-y-auto max-h-[160px] space-y-3 pr-2 scrollbar-thin scrollbar-thumb-gray-200 dark:scrollbar-thumb-gray-700">
               {filteredEntries.length === 0 ? (
                 <p className="text-sm text-gray-400 italic">No entries in this range.</p>
-              ) : filteredEntries.map(entry => (
+              ) : filteredEntries.slice(0, 10).map(entry => (
                 <div key={entry.id} className="flex items-center gap-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50 border border-gray-100 dark:border-gray-700/50 hover:bg-white dark:hover:bg-gray-800 transition-colors">
                   <div className={`w-2 h-10 rounded-full ${getMoodColor(entry.mood)}`}></div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-center mb-0.5">
                       <h4 className="font-bold text-gray-900 dark:text-gray-100 text-sm">{entry.mood}</h4>
-                      <span className="text-[10px] font-medium text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
+                      <span className="text-xs font-medium text-gray-400">{new Date(entry.date).toLocaleDateString()}</span>
                     </div>
                     <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{entry.note || "No note added..."}</p>
                   </div>
@@ -427,6 +430,59 @@ export const PersonalInsights: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* AI Deep Analysis Section */}
+      <section className="mb-8 bg-gradient-to-r from-primary/5 to-transparent rounded-3xl p-1 border border-primary/10 relative overflow-hidden">
+        <div className="bg-white dark:bg-card-dark rounded-[20px] p-6 md:p-8 relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <span className="material-symbols-outlined text-2xl">psychology</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">AI Deep Analysis</h3>
+                <p className="text-sm text-gray-500">Uncover hidden patterns in your {timeRange === '30days' ? 'last 30 days' : 'last 3 months'}.</p>
+              </div>
+            </div>
+            <button
+              onClick={async () => {
+                setIsAnalyzing(true);
+                const result = await generateMoodInsights(filteredEntries);
+                setAiAnalysis(result);
+                setIsAnalyzing(false);
+              }}
+              disabled={isAnalyzing || filteredEntries.length === 0}
+              className="px-4 py-2 bg-primary text-white text-sm font-bold rounded-lg shadow hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isAnalyzing ? (
+                <>
+                  <span className="material-symbols-outlined text-[18px] animate-spin">refresh</span>
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <span className="material-symbols-outlined text-[18px]">auto_awesome</span>
+                  Analyze Now
+                </>
+              )}
+            </button>
+          </div>
+
+          {aiAnalysis ? (
+            <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 animate-fade-in">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic border-l-4 border-primary pl-4">
+                "{aiAnalysis}"
+              </p>
+              <p className="text-xs text-gray-400 mt-2 text-right">- Your AI Companion</p>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-xl">
+              <span className="material-symbols-outlined text-4xl mb-2 opacity-50">analytics</span>
+              <p>Click "Analyze Now" to generate personalized insights based on your entries.</p>
+            </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 };

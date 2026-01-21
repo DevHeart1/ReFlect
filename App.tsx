@@ -6,7 +6,7 @@ import { SignIn } from './components/SignIn';
 import { OnboardingFlow } from './components/Onboarding';
 import { SettingsLayout } from './components/SettingsLayout';
 import { JournalEntry, Template } from './types';
-import { getAppSettings } from './utils/storage';
+import { getAppSettings, getUserProfile } from './utils/storage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, initDatabase } from './utils/db';
 import {
@@ -225,6 +225,7 @@ const App: React.FC = () => {
   const handleSaveEntry = async (title: string, content: string) => {
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
+      userId: getUserProfile().email, // Link to current user
       title: title,
       excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...', // Create plain text excerpt from HTML
       content: content,
