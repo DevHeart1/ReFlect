@@ -9,18 +9,43 @@ export const GeneralSettingsPage: React.FC = () => {
 
 
     // Apply theme side-effect
+    // Apply theme and accessibility side-effects
     useEffect(() => {
         const root = window.document.documentElement;
-        root.classList.remove('light', 'dark');
 
+        // 1. Theme
+        root.classList.remove('light', 'dark');
         let effectiveTheme = settings.theme;
         if (effectiveTheme === 'system') {
             const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
             effectiveTheme = systemDark ? 'dark' : 'light';
         }
-
         root.classList.add(effectiveTheme);
-    }, [settings.theme]);
+
+        // 2. Font Size
+        // Map slider values 1-3 to percentages
+        const fontSizes = {
+            1: '87.5%', // 14px equivalent
+            2: '100%',  // 16px equivalent (default)
+            3: '112.5%' // 18px equivalent
+        };
+        root.style.fontSize = fontSizes[settings.fontSize as keyof typeof fontSizes] || '100%';
+
+        // 3. High Contrast
+        if (settings.highContrast) {
+            root.classList.add('high-contrast');
+        } else {
+            root.classList.remove('high-contrast');
+        }
+
+        // 4. Screen Reader Optimization
+        if (settings.screenReader) {
+            root.classList.add('screen-reader-optimized');
+        } else {
+            root.classList.remove('screen-reader-optimized');
+        }
+
+    }, [settings.theme, settings.fontSize, settings.highContrast, settings.screenReader]);
 
     // Helper to update settings
     const updateSetting = <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => {

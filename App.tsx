@@ -167,6 +167,7 @@ const App: React.FC = () => {
   const templates = useLiveQuery(() => db.templates.toArray()) || [];
 
   // Initialize DB and Apply Theme
+  // Initialize DB and Apply Theme & Settings
   useEffect(() => {
     const init = async () => {
       // Initialize DB and seed templates
@@ -182,20 +183,43 @@ const App: React.FC = () => {
     };
     init();
 
-    const applyTheme = () => {
+    const applySettings = () => {
       const settings = getAppSettings();
       const root = window.document.documentElement;
-      root.classList.remove('light', 'dark');
 
+      // 1. Theme
+      root.classList.remove('light', 'dark');
       let effectiveTheme = settings.theme;
       if (effectiveTheme === 'system') {
         const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         effectiveTheme = systemDark ? 'dark' : 'light';
       }
       root.classList.add(effectiveTheme);
+
+      // 2. Font Size
+      const fontSizes = {
+        1: '87.5%',
+        2: '100%',
+        3: '112.5%'
+      };
+      root.style.fontSize = fontSizes[settings.fontSize as keyof typeof fontSizes] || '100%';
+
+      // 3. High Contrast
+      if (settings.highContrast) {
+        root.classList.add('high-contrast');
+      } else {
+        root.classList.remove('high-contrast');
+      }
+
+      // 4. Screen Reader Optimization
+      if (settings.screenReader) {
+        root.classList.add('screen-reader-optimized');
+      } else {
+        root.classList.remove('screen-reader-optimized');
+      }
     };
 
-    applyTheme();
+    applySettings();
   }, []);
 
   const handleSaveEntry = async (title: string, content: string) => {

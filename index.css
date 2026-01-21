@@ -8,12 +8,24 @@ body {
   background-color: #fafaf9;
   /* background-light */
   color: #131516;
+  transition: filter 0.3s ease;
 }
 
 .dark body {
   background-color: #232629;
   /* background-dark */
   color: #f1f3f3;
+}
+
+/* Accessibility Modes */
+.high-contrast body {
+  filter: contrast(1.25) saturate(1.1);
+}
+
+.screen-reader-optimized :focus {
+  outline: 3px solid #0ea5e9 !important;
+  /* sky-500 */
+  outline-offset: 2px;
 }
 
 /* Custom scrollbar */
