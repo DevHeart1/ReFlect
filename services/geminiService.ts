@@ -227,3 +227,39 @@ export const generateWeeklyReport = async (entries: any[], moods: any[]): Promis
     return null;
   }
 };
+
+export const generateDeepReflectPrompt = async (stage: string, context: string): Promise<string> => {
+  if (!ai) return "What is on your mind right now?";
+
+  const prompt = `
+  Generate a deep, specific reflection question for the "${stage}" of the day.
+  Context from previous entries today: "${context}".
+  
+  The question should:
+  1. Be relevant to the time of day (Morning: Intentions/Dreams, Afternoon: Progress/Stress, Evening: Review/Unwind).
+  2. Connect to the user's previous context if available.
+  3. Be short (under 25 words).
+  `;
+
+  try {
+    return await generateContent(prompt, "You are a thoughtful journaling companion.");
+  } catch {
+    return "What is the most important thing to focus on right now?";
+  }
+};
+
+export const synthesizeDeepReflectSession = async (responses: string[]): Promise<string> => {
+  if (!ai || responses.length === 0) return "Keep journaling to see a summary of your day.";
+
+  const prompt = `
+  Synthesize these journal entries from throughout the day into a cohesive narrative summary (max 3 sentences).
+  Entries:
+  ${responses.join('\n')}
+  `;
+
+  try {
+    return await generateContent(prompt, "You are a biographer summarizing a day in the life.");
+  } catch {
+    return "You've captured some meaningful moments today. Read them back to see your journey.";
+  }
+};

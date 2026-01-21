@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment } from '../services/geminiService';
+import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment, generateDeepReflectPrompt } from '../services/geminiService';
 import { RichTextEditor } from './editor/RichTextEditor';
 import { Template } from '../types';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
 import { calculateJournalStreak } from '../utils/analytics';
 import { getUserProfile } from '../utils/storage';
+import { useAIStore } from '../store/aiStore';
 
 interface JournalEditorProps {
   onBack: () => void;
@@ -26,7 +27,9 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const writingStreak = calculateJournalStreak(entries);
   const userProfile = getUserProfile();
 
-  // AI State
+  // AI State (Store)
+  const { isDeepReflectMode, deepReflectStage, setDeepReflectMode, dailyContext, addDailyContext } = useAIStore();
+
   const [prompts, setPrompts] = useState<string[]>([]);
   const [sentiment, setSentiment] = useState({ label: 'Neutral', score: 50, color: 'text-gray-500' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -34,15 +37,21 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
 
   const editorRef = useRef<any>(null);
 
-  // Initialize Prompts on Mount
+  // Initialize Prompts on Mount (or Mode Change)
   useEffect(() => {
     const initPrompts = async () => {
       try {
         setIsPromptsLoading(true);
-        // Generate two initial thought-provokers
-        const p1 = await generateThoughts();
-        const p2 = await generateThoughts();
-        setPrompts([p1, p2]);
+        if (isDeepReflectMode) {
+          const contextStr = dailyContext.join(' ');
+          const p1 = await generateDeepReflectPrompt(deepReflectStage, contextStr);
+          setPrompts([p1]);
+        } else {
+          // Standard Mode
+          const p1 = await generateThoughts();
+          const p2 = await generateThoughts();
+          setPrompts([p1, p2]);
+        }
       } catch (e) {
         console.warn("Failed to init prompts", e);
         setPrompts(["What is on your mind right now?", "Describe your current environment."]);
@@ -51,9 +60,9 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
       }
     };
     initPrompts();
-  }, []);
+  }, [isDeepReflectMode, deepReflectStage]); // Re-run when mode/stage changes
 
-  // ... (Keep existing template loading logic) ...
+  // ... (Keep existing template loading logic: lines 56-110) ...
   // Handle URL Prompts and Templates
   useEffect(() => {
     const template = location.state?.template as Template | undefined;
@@ -112,11 +121,19 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const handleRefreshPrompts = async () => {
     setIsGenerating(true);
     try {
-      // Generate prompts based on current content context
       const plainText = content.replace(/<[^>]+>/g, '');
-      const p1 = await generateThoughts(plainText);
-      const p2 = await generateThoughts(plainText); // Can be optimized to single call returning multiple if service supported it
-      setPrompts([p1, p2]);
+
+      if (isDeepReflectMode) {
+        // Deep Reflect Refresh: Use context + current content
+        const combinedContext = [...dailyContext, plainText].join(' ');
+        const p1 = await generateDeepReflectPrompt(deepReflectStage, combinedContext);
+        setPrompts([p1]);
+      } else {
+        // Standard Refresh
+        const p1 = await generateThoughts(plainText);
+        const p2 = await generateThoughts(plainText);
+        setPrompts([p1, p2]);
+      }
     } catch (e) {
       console.error(e);
       setPrompts([
@@ -128,7 +145,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
     }
   };
 
-  // Analyze sentiment periodically or on demand
+  // Analyze sentiment periodically (keep existing)
   useEffect(() => {
     const timeoutId = setTimeout(async () => {
       if (content.length > 50) {
@@ -138,7 +155,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
         setSentiment(result);
         setIsAnalyzing(false);
       }
-    }, 2000); // Debounce analysis
+    }, 2000);
 
     return () => clearTimeout(timeoutId);
   }, [content]);
@@ -193,10 +210,16 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
               <span>Focus Mode</span>
             </button>
             <button
-              onClick={() => onSave(title || 'Untitled Entry', content)}
-              className="flex items-center justify-center gap-2 h-9 px-6 rounded-lg bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:bg-primary/90 transition-colors"
+              onClick={() => {
+                onSave(title || 'Untitled Entry', content);
+                if (isDeepReflectMode) {
+                  const plainText = content.replace(/<[^>]+>/g, '');
+                  addDailyContext(`[${new Date().toLocaleTimeString()}] ${title}: ${plainText}`);
+                }
+              }}
+              className={`flex items-center justify-center gap-2 h-9 px-6 rounded-lg text-white text-sm font-bold shadow-lg transition-colors ${isDeepReflectMode ? 'bg-indigo-600 shadow-indigo-500/20 hover:bg-indigo-700' : 'bg-primary shadow-primary/20 hover:bg-primary/90'}`}
             >
-              <span>Save Entry</span>
+              <span>{isDeepReflectMode ? 'Save to Context' : 'Save Entry'}</span>
             </button>
           </div>
         </header>
@@ -277,12 +300,25 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
         <aside className="w-[340px] hidden xl:flex flex-col bg-card-light dark:bg-card-dark/50 border-l border-gray-100 dark:border-gray-800 relative z-10 shrink-0 animate-fade-in-right">
           <div className="flex items-center justify-between p-6 pb-2">
             <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">auto_awesome</span>
-              <h3 className="text-[#131516] dark:text-white text-base font-bold">Insight Companion</h3>
+              <span className={`material-symbols-outlined ${isDeepReflectMode ? 'text-indigo-500 animate-pulse' : 'text-primary'}`}>
+                {isDeepReflectMode ? 'psychology' : 'auto_awesome'}
+              </span>
+              <h3 className="text-[#131516] dark:text-white text-base font-bold">
+                {isDeepReflectMode ? 'Deep Reflect' : 'Insight Companion'}
+              </h3>
             </div>
-            <button onClick={() => setIsFocusMode(true)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Hide Sidebar">
-              <span className="material-symbols-outlined">close</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {/* Mode Toggle */}
+              <button
+                onClick={() => setDeepReflectMode(!isDeepReflectMode)}
+                className={`text-xs font-bold px-2 py-1 rounded-md transition-all ${isDeepReflectMode ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'}`}
+              >
+                {isDeepReflectMode ? 'Active' : 'Enable'}
+              </button>
+              <button onClick={() => setIsFocusMode(true)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Hide Sidebar">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
