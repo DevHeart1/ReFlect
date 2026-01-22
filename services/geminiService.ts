@@ -1,11 +1,20 @@
 import { GoogleGenAI } from "@google/genai";
+import { Groq } from "groq-sdk";
 import { TemplateBlock } from "../types";
 
 // Get API key from Vite environment variables
+// Get API key from Vite environment variables
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+const groqApiKey = import.meta.env.VITE_GROQ_API_KEY;
 
 // Initialize AI with Thinking Model Configuration
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+
+// Initialize Groq
+const groq = groqApiKey ? new Groq({
+  apiKey: groqApiKey,
+  dangerouslyAllowBrowser: true
+}) : null;
 
 const MODEL_NAME = 'gemini-3-flash-preview'; // Using latest flash preview
 const DEFAULT_CONFIG = {
@@ -15,9 +24,51 @@ const DEFAULT_CONFIG = {
 
 // --- Generic Helper ---
 
+const generateContentWithGroq = async (prompt: string, systemInstruction?: string, jsonMode: boolean = false): Promise<string> => {
+  if (!groq) {
+    console.warn("Groq API key not configured for fallback.");
+    throw new Error("Gemini quota exceeded and Groq fallback unavailable.");
+  }
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [
+        {
+          role: "system",
+          content: systemInstruction || "You are a helpful assistant."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      model: "qwen/qwen3-32b",
+      temperature: 0.6,
+      max_completion_tokens: 4096,
+      top_p: 0.95,
+      stream: false,
+      response_format: jsonMode ? { type: "json_object" } : undefined
+    });
+
+    return chatCompletion.choices[0]?.message?.content || "";
+  } catch (err) {
+    console.error("Groq API Error:", err);
+    throw err;
+  }
+};
+
 const generateContent = async (prompt: string, systemInstruction?: string, jsonMode: boolean = false): Promise<string> => {
   if (!ai) {
     console.warn("No Gemini API key configured.");
+    // Try Groq if Gemini key is missing but Groq key is present? 
+    // The requirement says "since we exceed our quota in gemini...i want it to switch", implying fallback.
+    // But if ai is null, maybe skipping straight to fallback is good too?
+    // For now, adhere to existing behavior for missing key, but maybe fallback logic checks error.
+    // If !ai, existing code returns "".
+    if (groq) {
+      console.warn("Switching to Groq as Gemini is not configured.");
+      return generateContentWithGroq(prompt, systemInstruction, jsonMode);
+    }
     return "";
   }
 
@@ -38,7 +89,20 @@ const generateContent = async (prompt: string, systemInstruction?: string, jsonM
     });
     // Error said: Type 'String' has no call signatures. So it is a property.
     return response.text?.toString() || "";
-  } catch (error) {
+  } catch (error: any) {
+    // Check for 429 or quota exceeded
+    // Common Gemini 429 error structure involves status or code
+    if (
+      error?.status === 429 ||
+      error?.code === 429 ||
+      error?.toString().includes('RESOURCE_EXHAUSTED') ||
+      error?.toString().includes('Quota exceeded') ||
+      error?.message?.includes('429')
+    ) {
+      console.warn("Gemini quota exceeded (429), switching to Groq fallback...", error);
+      return await generateContentWithGroq(prompt, systemInstruction, jsonMode);
+    }
+
     console.error("Gemini API Error:", error);
     throw error;
   }
