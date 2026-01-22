@@ -50,7 +50,9 @@ const generateContentWithGroq = async (prompt: string, systemInstruction?: strin
       response_format: jsonMode ? { type: "json_object" } : undefined
     });
 
-    return chatCompletion.choices[0]?.message?.content || "";
+    const content = chatCompletion.choices[0]?.message?.content || "";
+    // Remove structure thinking blocks if present
+    return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
   } catch (err) {
     console.error("Groq API Error:", err);
     throw err;
@@ -88,7 +90,10 @@ const generateContent = async (prompt: string, systemInstruction?: string, jsonM
       }
     });
     // Error said: Type 'String' has no call signatures. So it is a property.
-    return response.text?.toString() || "";
+    // Error said: Type 'String' has no call signatures. So it is a property.
+    const text = response.text?.toString() || "";
+    // Remove structure thinking blocks if present
+    return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
   } catch (error: any) {
     // Check for 429 or quota exceeded
     // Common Gemini 429 error structure involves status or code
