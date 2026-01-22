@@ -7,14 +7,13 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 // Initialize AI with Thinking Model Configuration
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-const MODEL_NAME = 'gemini-3-flash-preview'; // Using the latest stable flash model
+const MODEL_NAME = 'gemini-2.0-flash-exp'; // Fallback to stable experiment
 const DEFAULT_CONFIG = {
-  thinkingConfig: {
-    thinkingLevel: 'HIGH' as const,
-  },
-  // mediaResolution can sometimes be tricky with strict types, usually 'MEDIA_RESOLUTION_LOW' is correct but let's try avoiding the explicit cast if it fails or use the string directly.
-  // Actually, checking standard usage, let's keep it simple.
   responseMimeType: 'text/plain',
+} as any;
+// mediaResolution can sometimes be tricky with strict types, usually 'MEDIA_RESOLUTION_LOW' is correct but let's try avoiding the explicit cast if it fails or use the string directly.
+// Actually, checking standard usage, let's keep it simple.
+responseMimeType: 'text/plain',
 } as any; // Temporary loose typing to bypass the specific SDK enum conflict if imports are missing
 
 // --- Generic Helper ---

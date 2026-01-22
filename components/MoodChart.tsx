@@ -22,8 +22,9 @@ export const MoodChart: React.FC = () => {
 
       let value = 0;
       if (dayMoods.length > 0) {
-        const sum = dayMoods.reduce((acc, curr) => acc + (curr.moodValue || 3), 0); // Default to 3 if missing
-        value = (sum / dayMoods.length) * 20; // Scale 1-5 to 20-100 approx (5*20=100)
+        const sum = dayMoods.reduce((acc, curr) => acc + (Number(curr.moodValue) || 3), 0); // Default to 3 if missing or invalid
+        const rawValue = (sum / dayMoods.length) * 20;
+        value = Number.isFinite(rawValue) ? rawValue : 0; // Ensure no NaNs
       }
 
       chartData.push({ day: dayName, value });
