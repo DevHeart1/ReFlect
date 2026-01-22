@@ -24,6 +24,7 @@
     "dexie": "^4.2.1",
     "dexie-react-hooks": "^4.2.0",
     "emoji-picker-react": "^4.16.1",
+    "groq-sdk": "^0.37.0",
     "jspdf": "^4.0.0",
     "jspdf-autotable": "^5.0.7",
     "mime": "^4.1.0",
