@@ -7,7 +7,7 @@ const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 // Initialize AI with Thinking Model Configuration
 const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
-const MODEL_NAME = 'gemini-2.0-flash-exp'; // Fallback to stable experiment
+const MODEL_NAME = 'gemini-3-flash-preview'; // Using latest flash preview
 const DEFAULT_CONFIG = {
   responseMimeType: 'text/plain',
 } as any;
