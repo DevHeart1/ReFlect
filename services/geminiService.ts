@@ -478,15 +478,18 @@ export const generateSentenceCompletion = async (context: string): Promise<strin
   if (!ai) return "";
 
   const prompt = `
-    Complete the following sentence or phrase naturally and concisely.
+    You are an AI writing assistant. Your job is to strictly COMPLETE the user's sentence.
+    
     Context: "${context}"
     
     Rules:
-    1. Return ONLY the completion text.
-    2. Do NOT repeat the input context.
-    3. Keep it short (max 10 words).
-    4. If the sentence is complete, suggest a natural follow-up clause or sentence.
-    5. Do NOT output <think> tags.
+    1. Continue the text EXACTLY where it left off.
+    2. Maintain the user's voice (first person "I").
+    3. Do NOT give advice or answer a question.
+    4. If the sentence ends abruptly, finish it.
+    5. If the sentence is complete, add a natural flowing next sentence.
+    6. Keep it short (max 8 words).
+    7. Return ONLY the completion text.
     `;
 
   try {

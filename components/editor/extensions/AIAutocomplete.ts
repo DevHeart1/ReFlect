@@ -39,7 +39,13 @@ export const AIAutocomplete = Extension.create({
                     handleKeyDown(view, event) {
                         if (event.key === 'Tab' && suggestion) {
                             event.preventDefault();
-                            view.dispatch(view.state.tr.insertText(' ' + suggestion)); // Add space for safety or assume natural flow? 
+
+                            // Check if context ends with space to decide insertion
+                            const { selection } = view.state;
+                            const context = view.state.doc.textBetween(Math.max(0, selection.from - 1), selection.from);
+                            const needsSpace = context !== ' ' && context !== '\n' && !context.endsWith(' ');
+
+                            view.dispatch(view.state.tr.insertText((needsSpace ? ' ' : '') + suggestion));
                             // Usually spaces are handled by the user or the suggestion.
                             // Let's assume the suggestion might lack a leading space if it continues a word, 
                             // or have one if it's new.
@@ -71,10 +77,15 @@ export const AIAutocomplete = Extension.create({
                             try {
                                 const result = await generateSentenceCompletion(context);
                                 if (result) {
+                                    // Check if we need a space (if previous char isn't space)
+                                    const needsSpace = !context.endsWith(' ');
                                     suggestion = result;
+
                                     // Create decoration
                                     const div = document.createElement('span');
-                                    div.textContent = result;
+                                    // Visual separation: if we need a space, show it in the ghost text.
+                                    // Note: trailing spaces in context are usually reliable.
+                                    div.textContent = (needsSpace ? '\u00A0' : '') + result;
                                     div.className = 'text-gray-400 pointer-events-none italic';
                                     div.style.userSelect = 'none';
 
