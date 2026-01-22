@@ -483,7 +483,7 @@ export const generateSentenceCompletion = async (context: string): Promise<strin
     Context: "${context}"
     
     Rules:
-    1. Continue the text EXACTLY where it left off.
+    1. Continue the text EXACTLY where it left off. DO NOT REPEAT the last words of context.
     2. Maintain the user's voice (first person "I").
     3. Do NOT give advice or answer a question.
     4. If the sentence ends abruptly, finish it.
