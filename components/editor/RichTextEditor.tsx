@@ -12,6 +12,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import Youtube from '@tiptap/extension-youtube';
 import Typography from '@tiptap/extension-typography';
 import { AutoCapitalize } from './extensions/AutoCapitalize';
+import { AIAutocomplete } from './extensions/AIAutocomplete';
 
 import { EditorToolbar } from './EditorToolbar';
 import { YouTubeModal } from './YouTubeModal';
@@ -252,6 +253,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
             MoodNode,
             Typography,
             AutoCapitalize,
+            AIAutocomplete,
             Placeholder.configure({
                 placeholder,
             }),

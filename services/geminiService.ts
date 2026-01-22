@@ -473,3 +473,35 @@ export const generateQuickPrompts = async (): Promise<QuickPrompt[]> => {
     ];
   }
 };
+
+export const generateSentenceCompletion = async (context: string): Promise<string> => {
+  if (!ai) return "";
+
+  const prompt = `
+    Complete the following sentence or phrase naturally and concisely.
+    Context: "${context}"
+    
+    Rules:
+    1. Return ONLY the completion text.
+    2. Do NOT repeat the input context.
+    3. Keep it short (max 10 words).
+    4. If the sentence is complete, suggest a natural follow-up clause or sentence.
+    5. Do NOT output <think> tags.
+    `;
+
+  try {
+    // Use a quicker, lighter request if possible, but standard generateContent works.
+    const result = await generateContent(prompt, "You are a helpful writing assistant. Complete the user's thought.", false);
+    // Ensure no repetition of the end of the context if the model hallucinates it back
+    let completion = result.replace(/^"/, '').replace(/"$/, '').trim();
+
+    // Simple overlap check (naive)
+    if (completion.toLowerCase().startsWith(context.slice(-5).toLowerCase())) {
+      completion = completion.slice(context.slice(-5).length);
+    }
+
+    return completion;
+  } catch {
+    return "";
+  }
+}
