@@ -119,6 +119,7 @@ export const DailyMoodTracker: React.FC = () => {
                 <button
                   key={mood.label}
                   onClick={() => setSelectedMood(mood.label)}
+                  title={mood.label}
                   className="group flex flex-col items-center gap-3 transition-transform hover:-translate-y-2 focus:outline-none"
                 >
                   <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center transition-all shadow-sm hover:shadow-lg border-2 
