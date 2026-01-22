@@ -11,10 +11,7 @@ const MODEL_NAME = 'gemini-2.0-flash-exp'; // Fallback to stable experiment
 const DEFAULT_CONFIG = {
   responseMimeType: 'text/plain',
 } as any;
-// mediaResolution can sometimes be tricky with strict types, usually 'MEDIA_RESOLUTION_LOW' is correct but let's try avoiding the explicit cast if it fails or use the string directly.
-// Actually, checking standard usage, let's keep it simple.
-responseMimeType: 'text/plain',
-} as any; // Temporary loose typing to bypass the specific SDK enum conflict if imports are missing
+
 
 // --- Generic Helper ---
 
