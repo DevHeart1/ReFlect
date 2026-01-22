@@ -3,6 +3,8 @@ import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
 import { MoodCheckin } from '../utils/storage';
 import { generateMoodInsights, generatePatternInsights, PatternInsights } from '../services/geminiService';
+import { MarkdownRenderer } from './MarkdownRenderer';
+
 
 type TimeRange = '30days' | '3months';
 
@@ -398,9 +400,9 @@ export const PersonalInsights: React.FC = () => {
                 </div>
                 <h4 className="font-bold text-gray-800 dark:text-gray-100">Weekly Insight</h4>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {patternInsights ? patternInsights.weeklyInsight : <span className="animate-pulse">Analyzing patterns...</span>}
-              </p>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {patternInsights ? <MarkdownRenderer content={patternInsights.weeklyInsight} /> : <span className="animate-pulse">Analyzing patterns...</span>}
+              </div>
             </div>
 
             {/* Pattern 2: Top Factor */}
@@ -411,9 +413,9 @@ export const PersonalInsights: React.FC = () => {
                 </div>
                 <h4 className="font-bold text-gray-800 dark:text-gray-100">Top Factor</h4>
               </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {patternInsights ? patternInsights.topFactorInsight : <span className="animate-pulse">Analyzing factors...</span>}
-              </p>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                {patternInsights ? <MarkdownRenderer content={patternInsights.topFactorInsight} /> : <span className="animate-pulse">Analyzing factors...</span>}
+              </div>
             </div>
           </div>
 
@@ -479,9 +481,9 @@ export const PersonalInsights: React.FC = () => {
 
           {aiAnalysis ? (
             <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-100 dark:border-gray-700 animate-fade-in">
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed italic border-l-4 border-primary pl-4">
-                "{aiAnalysis}"
-              </p>
+              <div className="text-gray-700 dark:text-gray-300 leading-relaxed italic border-l-4 border-primary pl-4">
+                <MarkdownRenderer content={aiAnalysis} />
+              </div>
               <p className="text-xs text-gray-400 mt-2 text-right">- Judy</p>
             </div>
           ) : (

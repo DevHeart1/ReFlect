@@ -8,6 +8,7 @@ import { db } from '../utils/db';
 import { calculateJournalStreak } from '../utils/analytics';
 import { getUserProfile } from '../utils/storage';
 import { useAIStore } from '../store/aiStore';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface JournalEditorProps {
   onBack: () => void;
@@ -442,8 +443,8 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                       <div className={`mt-0.5 ${index === 0 ? 'text-accent' : 'text-blue-400'}`}>
                         <span className="material-symbols-outlined text-lg">{index === 0 ? 'lightbulb' : 'water_drop'}</span>
                       </div>
-                      <div>
-                        <p className="text-sm text-gray-700 dark:text-gray-200 leading-snug mb-2">{prompt}</p>
+                      <div className="flex-1">
+                        <MarkdownRenderer content={prompt} className="text-sm text-gray-700 dark:text-gray-200 mb-2" />
                         <div className="flex items-center gap-1 text-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                           <span>Click to add</span>
                           <span className="material-symbols-outlined text-sm">add</span>

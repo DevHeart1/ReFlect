@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { WeeklyReport, generateWeeklyReport } from '../services/geminiService';
 import { JournalEntry } from '../types';
 import { MoodCheckin } from '../services/geminiService';
+import { MarkdownRenderer } from './MarkdownRenderer';
+
 
 interface WeeklyReportCardProps {
     entries: JournalEntry[];
@@ -87,7 +89,9 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ entries, moo
                                 <span className="material-symbols-outlined text-lg">lightbulb</span>
                                 Validated Insight
                             </h4>
-                            <p className="text-lg text-gray-800 dark:text-gray-100 italic leading-relaxed">"{report.insight}"</p>
+                            <div className="text-lg text-gray-800 dark:text-gray-100 italic leading-relaxed">
+                                <MarkdownRenderer content={report.insight} />
+                            </div>
                         </div>
 
                         {/* Strategy & Audit */}
@@ -97,14 +101,18 @@ export const WeeklyReportCard: React.FC<WeeklyReportCardProps> = ({ entries, moo
                                     <span className="material-symbols-outlined text-lg">strategy</span>
                                     Strategic Proposal
                                 </h4>
-                                <p className="text-gray-800 dark:text-gray-200">{report.strategy}</p>
+                                <div className="text-gray-800 dark:text-gray-200">
+                                    <MarkdownRenderer content={report.strategy} />
+                                </div>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-700/50">
                                 <h4 className="flex items-center gap-2 text-xs font-bold text-gray-500 uppercase mb-2">
                                     <span className="material-symbols-outlined text-lg">verified_user</span>
                                     AI Self-Audit
                                 </h4>
-                                <p className="text-xs text-gray-500 leading-relaxed">{report.selfAudit}</p>
+                                <div className="text-xs text-gray-500 leading-relaxed">
+                                    <MarkdownRenderer content={report.selfAudit} />
+                                </div>
                             </div>
                         </div>
                     </div>
