@@ -1,9 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Dialog } from '../components/Dialog';
-import {
-    clearUserSession
-} from '../utils/storage';
 import { exportToJSON, exportToPDF } from '../utils/export';
+import { authService } from '../services/authService';
 
 export const DataManagementPage: React.FC = () => {
     // State for Dialogs
@@ -11,6 +9,7 @@ export const DataManagementPage: React.FC = () => {
     const [showExportDialog, setShowExportDialog] = useState(false);
     const [importError, setImportError] = useState<string | null>(null);
     const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // File Input Ref
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -58,8 +57,16 @@ export const DataManagementPage: React.FC = () => {
     };
 
     // --- Delete ---
-    const handleDeleteEverything = () => {
-        clearUserSession();
+    const handleDeleteEverything = async () => {
+        try {
+            setIsDeleting(true);
+            await authService.deleteAccount();
+        } catch (error) {
+            console.error('Failed to delete account:', error);
+            alert('Failed to delete account. Please try again or contact support.');
+            setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
+        }
     };
 
     return (
@@ -212,8 +219,10 @@ export const DataManagementPage: React.FC = () => {
                         </button>
                         <button
                             onClick={handleDeleteEverything}
-                            className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg"
+                            disabled={isDeleting}
+                            className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                         >
+                            {isDeleting && <span className="material-symbols-outlined animate-spin text-sm">progress_activity</span>}
                             Yes, Delete All Data
                         </button>
                     </>

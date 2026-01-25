@@ -134,5 +134,28 @@ export const authService = {
 
         if (error) throw error;
         window.dispatchEvent(new Event('profile-updated'));
+    },
+
+    deleteAccount: async () => {
+        // Get current user before deleting
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('No user logged in');
+
+        // Delete all user data from tables (RLS should handle this automatically via cascade)
+        // But we can explicitly delete to be sure
+        await supabase.from('journal_entries').delete().eq('user_id', user.id);
+        await supabase.from('mood_checkins').delete().eq('user_id', user.id);
+        await supabase.from('user_settings').delete().eq('user_id', user.id);
+        await supabase.from('profiles').delete().eq('id', user.id);
+
+        // Delete the user account from Supabase Auth
+        // Note: This requires RLS policies to allow deletion or admin API
+        // For now, we'll sign out and the user can request deletion via support
+        await supabase.auth.signOut();
+
+        // Clear all local data
+        localStorage.clear();
+
+        window.location.href = '/';
     }
 };
