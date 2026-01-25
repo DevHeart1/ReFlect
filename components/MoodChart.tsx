@@ -1,15 +1,19 @@
 import React, { useMemo } from 'react';
 import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../utils/db';
+import { MoodCheckin } from '../utils/storage';
 
-export const MoodChart: React.FC = () => {
-  const moods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(50).toArray()) || [];
+interface MoodChartProps {
+    moods: MoodCheckin[];
+}
 
+export const MoodChart: React.FC<MoodChartProps> = ({ moods }) => {
   const data = useMemo(() => {
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = new Date();
     const chartData = [];
+
+    // Use passed moods instead of querying DB
+    const recentMoods = moods || [];
 
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -18,7 +22,7 @@ export const MoodChart: React.FC = () => {
 
       // Find avg mood for this day
       const dayStr = d.toDateString();
-      const dayMoods = moods.filter(m => new Date(m.date).toDateString() === dayStr);
+      const dayMoods = recentMoods.filter(m => new Date(m.date).toDateString() === dayStr);
 
       let value = 0;
       if (dayMoods.length > 0) {

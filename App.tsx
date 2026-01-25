@@ -399,7 +399,7 @@ const App: React.FC = () => {
           {/* Routes */}
           <div className="flex-1 overflow-y-auto">
             <Routes>
-              <Route path="/" element={<Dashboard entries={entries} />} />
+              <Route path="/" element={<Dashboard entries={entries} moods={moods} />} />
               <Route path="/mood-tracker" element={<MoodTrackerPage moods={moods} />} />
               <Route path="/insights" element={<InsightsPage entries={entries} moods={moods} />} />
               <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
