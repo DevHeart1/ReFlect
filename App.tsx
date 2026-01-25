@@ -281,7 +281,6 @@ const App: React.FC = () => {
   }
 
   return (
-  return (
     <Router>
       <div className="flex h-screen bg-background-light dark:bg-background-dark text-[#131516] dark:text-[#f1f3f3] overflow-hidden font-display">
         <Sidebar
