@@ -1,6 +1,12 @@
 import React from 'react';
 import { YearReport } from '../components/YearReport';
 
-export const YearReportPage: React.FC = () => {
-    return <YearReport />;
+import { MoodCheckin } from '../utils/storage';
+
+interface YearReportPageProps {
+    moods: MoodCheckin[];
+}
+
+export const YearReportPage: React.FC<YearReportPageProps> = ({ moods }) => {
+    return <YearReport moods={moods} />;
 };

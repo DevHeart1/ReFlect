@@ -1,14 +1,18 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../utils/db';
 import { Dialog } from './Dialog';
 import { exportToJSON, exportToPDF } from '../utils/export';
 import { analyzeMoods, MoodStats } from '../utils/analytics';
 import { generateYearlySummary } from '../services/geminiService';
 
-export const YearReport: React.FC = () => {
+import { MoodCheckin } from '../utils/storage';
+
+interface YearReportProps {
+  moods: MoodCheckin[];
+}
+
+export const YearReport: React.FC<YearReportProps> = ({ moods }) => {
   const [showExportDialog, setShowExportDialog] = useState(false);
-  const checkins = useLiveQuery(() => db.moodCheckins.toArray()) || [];
+  const checkins = moods;
 
   const stats = useMemo(() => analyzeMoods(checkins), [checkins]);
 

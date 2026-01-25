@@ -6,7 +6,7 @@ import { SignIn } from './components/SignIn';
 import { OnboardingFlow } from './components/Onboarding';
 import { SettingsLayout } from './components/SettingsLayout';
 import { JournalEntry, Template } from './types';
-import { getAppSettings, getUserProfile } from './utils/storage';
+import { getAppSettings, getUserProfile, MoodCheckin } from './utils/storage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, initDatabase } from './utils/db';
 import { authService } from './services/authService';
@@ -158,36 +158,47 @@ const INITIAL_TEMPLATES: Template[] = [
 ];
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!authService.getCurrentSession());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // DB Live Queries
-  const entries = useLiveQuery(() => db.journalEntries.orderBy('date').reverse().toArray()) || [];
-  const templates = useLiveQuery(() => db.templates.toArray()) || [];
+  // Supabase State
+  const [entries, setEntries] = useState<JournalEntry[]>([]);
+  const [moods, setMoods] = useState<MoodCheckin[]>([]);
+  const [templates, setTemplates] = useState<Template[]>(INITIAL_TEMPLATES); // Default templates locally for now or fetch
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
-  // Initialize DB and Apply Theme
-  // Initialize DB and Apply Theme & Settings
+  // Initialize Auth & Data
   useEffect(() => {
     const init = async () => {
-      // Initialize DB and seed templates
-      await initDatabase(INITIAL_TEMPLATES);
+      // Check auth
+      const session = await authService.getCurrentSession();
+      const isAuth = !!session;
+      setIsAuthenticated(isAuth);
+      setIsAuthLoading(false);
 
-      // Seed initial entries if DB is empty and no local storage migration happened
-      if ((await db.journalEntries.count()) === 0) {
-        const hasLocalData = localStorage.getItem('reflect_journal_entries');
-        if (!hasLocalData) {
-          await db.journalEntries.bulkPut(INITIAL_ENTRIES);
+      if (isAuth) {
+        // Trigger Migration if needed
+        try {
+          const { migrateDataToSupabase } = await import('./utils/migration');
+          await migrateDataToSupabase();
+        } catch (e) {
+          console.error("Migration failed", e);
         }
+
+        // Fetch Data
+        await fetchData();
       }
     };
     init();
 
+    // Settings logic...
     const applySettings = () => {
+      // ... (keep existing settings logic)
       const settings = getAppSettings();
       const root = window.document.documentElement;
-
       // 1. Theme
       root.classList.remove('light', 'dark');
       let effectiveTheme = settings.theme;
@@ -196,34 +207,20 @@ const App: React.FC = () => {
         effectiveTheme = systemDark ? 'dark' : 'light';
       }
       root.classList.add(effectiveTheme);
-
       // 2. Font Size
-      const fontSizes = {
-        1: '87.5%',
-        2: '100%',
-        3: '112.5%'
-      };
+      const fontSizes = { 1: '87.5%', 2: '100%', 3: '112.5%' };
       root.style.fontSize = fontSizes[settings.fontSize as keyof typeof fontSizes] || '100%';
-
       // 3. High Contrast
-      if (settings.highContrast) {
-        root.classList.add('high-contrast');
-      } else {
-        root.classList.remove('high-contrast');
-      }
-
-      // 4. Screen Reader Optimization
-      if (settings.screenReader) {
-        root.classList.add('screen-reader-optimized');
-      } else {
-        root.classList.remove('screen-reader-optimized');
-      }
+      if (settings.highContrast) root.classList.toggle('high-contrast', settings.highContrast);
+      // 4. Screen Reader
+      if (settings.screenReader) root.classList.toggle('screen-reader-optimized', settings.screenReader);
     };
-
     applySettings();
 
-    const handleAuthChange = () => {
-      setIsAuthenticated(!!authService.getCurrentSession());
+    const handleAuthChange = async () => {
+      const session = await authService.getCurrentSession();
+      setIsAuthenticated(!!session);
+      if (session) await fetchData();
     };
 
     window.addEventListener('storage', handleAuthChange);
@@ -234,6 +231,25 @@ const App: React.FC = () => {
       window.removeEventListener('auth-change', handleAuthChange);
     };
   }, []);
+
+  const fetchData = async () => {
+    try {
+      // Dynamic import to avoid cycles or ensure service is ready
+      const { supabaseService } = await import('./services/supabaseService');
+      const [fetchedEntries, fetchedMoods] = await Promise.all([
+        supabaseService.getEntries(),
+        supabaseService.getMoods()
+      ]);
+      setEntries(fetchedEntries);
+      setMoods(fetchedMoods);
+
+      // Optionally fetch templates from DB if you store them there
+      // const fetchedTemplates = await supabaseService.getTemplates();
+      // setTemplates(fetchedTemplates);
+    } catch (e) {
+      console.error("Failed to fetch data", e);
+    }
+  };
 
   const handleSaveEntry = async (title: string, content: string) => {
     // 1. Analyze Mood asynchronously
@@ -255,47 +271,73 @@ const App: React.FC = () => {
     }
 
     // 2. Create Journal Entry
+    const currentUser = await authService.getCurrentUser();
     const newEntry: JournalEntry = {
-      id: Date.now().toString(),
-      userId: authService.getCurrentUser()?.id || 'anonymous',
+      id: crypto.randomUUID(), // Ensure UUID for Postgres
+      userId: currentUser?.id || 'anonymous',
       title: title,
       excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
       content: content,
       date: new Date().toISOString(),
-      tags: ['Journal', ...moodData.secondaryEmotions], // Add detected emotions as tags
+      tags: ['Journal', ...moodData.secondaryEmotions],
       type: 'journal',
       mood: moodData.mood,
-      icon: 'spa', // Could dynamic icon map later
+      icon: 'spa',
       colorClass: `bg-opacity-10 ${moodData.color.replace('text-', 'bg-')} ${moodData.color}`
     };
-    await db.journalEntries.add(newEntry);
 
-    // 3. Save Mood Check-in
-    await db.moodCheckins.add({
-      id: crypto.randomUUID(),
-      date: newEntry.date,
-      mood: moodData.mood,
-      moodValue: moodData.moodValue,
-      secondaryEmotions: moodData.secondaryEmotions,
-      factors: moodData.factors,
-      note: 'Auto-generated from journal entry'
-    });
+    try {
+      const { supabaseService } = await import('./services/supabaseService');
+      await supabaseService.addEntry(newEntry);
+
+      // 3. Save Mood Check-in
+      await supabaseService.addMood({
+        id: crypto.randomUUID(),
+        user_id: newEntry.userId, // Matches schema snake_case if I passed it raw, but let's check interface
+        date: newEntry.date,
+        mood: moodData.mood,
+        moodValue: moodData.moodValue,
+        secondaryEmotions: moodData.secondaryEmotions,
+        factors: moodData.factors,
+        note: 'Auto-generated from journal entry'
+      } as any); // Type assertion for now, need to align interfaces
+
+      // Refresh Data
+      await fetchData();
+    } catch (e) {
+      console.error("Failed to save entry", e);
+    }
   };
 
   const handleDeleteEntry = async (id: string) => {
-    await db.journalEntries.delete(id);
+    try {
+      const { supabaseService } = await import('./services/supabaseService');
+      await supabaseService.deleteEntry(id);
+      await fetchData();
+    } catch (e) {
+      console.error("Failed to delete", e);
+    }
   };
 
   const handleEditEntry = async (id: string, title: string, content: string) => {
-    await db.journalEntries.update(id, {
-      title,
-      excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
-      content
-    });
+    try {
+      const { supabaseService } = await import('./services/supabaseService');
+      await supabaseService.updateEntry(id, {
+        title,
+        excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
+        content
+      });
+      await fetchData();
+    } catch (e) {
+      console.error("Failed to update", e);
+    }
   };
 
   const handleAddTemplate = async (newTemplate: Template) => {
-    await db.templates.add(newTemplate);
+    // Keep templates local or DB? 
+    // For now, let's keep basic templates array state + local persistence if needed
+    // or just append to state
+    setTemplates(prev => [...prev, newTemplate]);
   };
 
   const handleSignIn = () => {
@@ -313,6 +355,14 @@ const App: React.FC = () => {
   };
 
   // Auth Guard
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-white dark:bg-background-dark">
+        <span className="material-symbols-outlined animate-spin text-primary text-4xl">progress_activity</span>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <SignIn onSignIn={handleSignIn} onSignUp={handleSignUp} />;
   }
@@ -350,8 +400,8 @@ const App: React.FC = () => {
           <div className="flex-1 overflow-y-auto">
             <Routes>
               <Route path="/" element={<Dashboard entries={entries} />} />
-              <Route path="/mood-tracker" element={<MoodTrackerPage />} />
-              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/mood-tracker" element={<MoodTrackerPage moods={moods} />} />
+              <Route path="/insights" element={<InsightsPage entries={entries} moods={moods} />} />
               <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
               <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
@@ -365,7 +415,7 @@ const App: React.FC = () => {
                 <Route path="notifications" element={<NotificationSettingsPage />} />
               </Route>
 
-              <Route path="/year-report" element={<YearReportPage />} />
+              <Route path="/year-report" element={<YearReportPage moods={moods} />} />
               <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
               <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
               <Route path="/notifications" element={<NotificationsPage />} />

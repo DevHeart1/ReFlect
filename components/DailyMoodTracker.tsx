@@ -1,16 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
-import { generateMoodInsights, generatePatternInsights, MoodCheckin } from '../services/geminiService';
+import { generateMoodInsights, generatePatternInsights } from '../services/geminiService';
 import { MoodChart } from './MoodChart';
 
-export const DailyMoodTracker: React.FC = () => {
+import { MoodCheckin } from '../utils/storage';
+
+interface DailyMoodTrackerProps {
+  moods: MoodCheckin[];
+}
+
+export const DailyMoodTracker: React.FC<DailyMoodTrackerProps> = ({ moods }) => {
   const [insight, setInsight] = useState("Analyzing your recent emotional patterns...");
   const [patternData, setPatternData] = useState<{ weeklyInsight: string; topFactorInsight: string } | null>(null);
   const [isInsightLoading, setIsInsightLoading] = useState(false);
 
-  // Cast recentMoods to compatible type if needed
-  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(50).toArray()) as unknown as MoodCheckin[] || [];
+  const recentMoods = moods.slice(0, 50);
 
   useEffect(() => {
     if (recentMoods.length > 0) {

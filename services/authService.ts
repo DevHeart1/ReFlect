@@ -1,165 +1,94 @@
 import { UserProfile, DEFAULT_PROFILE } from '../utils/storage';
-import { db } from '../utils/db';
-import { jwtDecode } from 'jwt-decode';
+import { supabase } from '../utils/supabaseClient';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 
-const USERS_KEY = 'reflect_users';
-const SESSION_KEY = 'reflect_session';
-
+// Re-export specific types if needed or adapt the User interface
 export interface User extends UserProfile {
     id: string;
-    passwordHash: string;
     joinedDate: string;
 }
 
-// Simple hash function (for local-only security simulation)
-const hashPassword = async (password: string): Promise<string> => {
-    const msgBuffer = new TextEncoder().encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+// Helper to map Supabase user to our app's user structure
+const mapSupabaseUser = (u: SupabaseUser): User => {
+    return {
+        id: u.id,
+        name: u.user_metadata.name || 'User',
+        email: u.email || '',
+        avatarUrl: u.user_metadata.avatar_url || DEFAULT_PROFILE.avatarUrl,
+        isPro: false, // Default or fetch from profile table later
+        joinedDate: u.created_at || new Date().toISOString()
+    };
 };
 
 export const authService = {
     // --- Session Management ---
 
-    getCurrentSession: (): string | null => {
-        return localStorage.getItem(SESSION_KEY);
+    getCurrentSession: async () => {
+        const { data } = await supabase.auth.getSession();
+        return data.session;
     },
 
-    getCurrentUser: (): User | null => {
-        const sessionId = localStorage.getItem(SESSION_KEY);
-        if (!sessionId) return null;
-
-        const users = authService.getUsers();
-        return users.find(u => u.id === sessionId) || null;
-    },
-
-    getUsers: (): User[] => {
-        try {
-            const data = localStorage.getItem(USERS_KEY);
-            return data ? JSON.parse(data) : [];
-        } catch (e) {
-            return [];
-        }
+    getCurrentUser: async (): Promise<User | null> => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
+        return mapSupabaseUser(user);
     },
 
     // --- Actions ---
 
     signup: async (name: string, email: string, password: string): Promise<User> => {
-        const users = authService.getUsers();
-        if (users.some(u => u.email === email)) {
-            throw new Error('User already exists');
-        }
-
-        const passwordHash = await hashPassword(password);
-        const newUser: User = {
-            id: crypto.randomUUID(),
-            name,
+        const { data, error } = await supabase.auth.signUp({
             email,
-            passwordHash,
-            avatarUrl: DEFAULT_PROFILE.avatarUrl,
-            isPro: false,
-            joinedDate: new Date().toISOString()
-        };
+            password,
+            options: {
+                data: {
+                    name,
+                    avatar_url: DEFAULT_PROFILE.avatarUrl
+                }
+            }
+        });
 
-        const { id, passwordHash: _, ...profileData } = newUser;
+        if (error) throw error;
+        if (!data.user) throw new Error('Signup failed');
 
-        users.push(newUser);
-        localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-        // Sync to Dexie
-        await db.profile.put({ ...profileData, id: 'current' });
-
-        // Auto login
-        localStorage.setItem(SESSION_KEY, newUser.id);
-        return newUser;
+        return mapSupabaseUser(data.user);
     },
 
     login: async (email: string, password: string): Promise<User> => {
-        const users = authService.getUsers();
-        const user = users.find(u => u.email === email);
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
 
-        if (!user) {
-            throw new Error('Invalid credentials');
-        }
+        if (error) throw error;
+        if (!data.user) throw new Error('Login failed');
 
-        const passwordHash = await hashPassword(password);
-        if (user.passwordHash !== passwordHash) {
-            throw new Error('Invalid credentials');
-        }
-
-        const { id, passwordHash: _, ...profileData } = user;
-        // Sync to Dexie
-        await db.profile.put({ ...profileData, id: 'current' });
-
-        localStorage.setItem(SESSION_KEY, user.id);
-        return user;
+        return mapSupabaseUser(data.user);
     },
 
-    loginWithGoogle: async (token: string): Promise<User> => {
-        try {
-            const decoded: any = jwtDecode(token);
+    loginWithGoogle: async (idToken: string): Promise<User> => {
+        const { data, error } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: idToken,
+        });
 
-            const email = decoded.email;
-            const name = decoded.name;
-            const avatarUrl = decoded.picture;
+        if (error) throw error;
+        if (!data.user) throw new Error('Google Login failed');
 
-            // Check if user exists
-            const users = authService.getUsers();
-            let user = users.find(u => u.email === email);
-
-            if (!user) {
-                // Create new user automatically from Google data
-                user = {
-                    id: crypto.randomUUID(),
-                    name,
-                    email,
-                    passwordHash: '', // No password for Google users
-                    avatarUrl: avatarUrl || DEFAULT_PROFILE.avatarUrl,
-                    isPro: false,
-                    joinedDate: new Date().toISOString()
-                };
-                users.push(user);
-                localStorage.setItem(USERS_KEY, JSON.stringify(users));
-            } else {
-                // Update avatar if changed (optional)
-                if (avatarUrl && user.avatarUrl !== avatarUrl) {
-                    user.avatarUrl = avatarUrl;
-                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
-                }
-            }
-
-            // Sync to Dexie
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { id, passwordHash, ...profileData } = user;
-            await db.profile.put({ ...profileData, id: 'current' });
-
-            localStorage.setItem(SESSION_KEY, user.id);
-            return user;
-        } catch (e) {
-            console.error('Google login error', e);
-            throw new Error('Failed to login with Google');
-        }
+        return mapSupabaseUser(data.user);
     },
 
-    logout: () => {
-        localStorage.removeItem(SESSION_KEY);
+    logout: async () => {
+        await supabase.auth.signOut();
         window.dispatchEvent(new Event('auth-change'));
     },
 
-    updateProfile: (updatedData: Partial<UserProfile>) => {
-        const currentUser = authService.getCurrentUser();
-        if (!currentUser) return;
+    updateProfile: async (updatedData: Partial<UserProfile>) => {
+        const { error } = await supabase.auth.updateUser({
+            data: updatedData
+        });
 
-        const users = authService.getUsers();
-        const index = users.findIndex(u => u.id === currentUser.id);
-
-        if (index !== -1) {
-            users[index] = { ...users[index], ...updatedData };
-            localStorage.setItem(USERS_KEY, JSON.stringify(users));
-
-            // Also update session triggered events if needed
-            window.dispatchEvent(new Event('profile-updated'));
-        }
+        if (error) throw error;
+        window.dispatchEvent(new Event('profile-updated'));
     }
 };
