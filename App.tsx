@@ -236,20 +236,50 @@ const App: React.FC = () => {
   }, []);
 
   const handleSaveEntry = async (title: string, content: string) => {
+    // 1. Analyze Mood asynchronously
+    let moodData = {
+      mood: 'Neutral',
+      moodValue: 3,
+      factors: [] as string[],
+      secondaryEmotions: [] as string[],
+      color: 'text-gray-500'
+    };
+
+    try {
+      // Import dynamically to avoid circular dependencies if any
+      const { extractMoodFromJournal } = await import('./services/geminiService');
+      const analysis = await extractMoodFromJournal(content);
+      moodData = analysis;
+    } catch (error) {
+      console.error("Auto-mood analysis failed:", error);
+    }
+
+    // 2. Create Journal Entry
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
-      userId: authService.getCurrentUser()?.id || 'anonymous', // Link to current user
+      userId: authService.getCurrentUser()?.id || 'anonymous',
       title: title,
-      excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...', // Create plain text excerpt from HTML
+      excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
       content: content,
-      date: new Date().toISOString(), // Use ISO for better sorting in DB
-      tags: ['Journal', 'Reflective'],
+      date: new Date().toISOString(),
+      tags: ['Journal', ...moodData.secondaryEmotions], // Add detected emotions as tags
       type: 'journal',
-      mood: 'Calm',
-      icon: 'spa',
-      colorClass: 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-300'
+      mood: moodData.mood,
+      icon: 'spa', // Could dynamic icon map later
+      colorClass: `bg-opacity-10 ${moodData.color.replace('text-', 'bg-')} ${moodData.color}`
     };
     await db.journalEntries.add(newEntry);
+
+    // 3. Save Mood Check-in
+    await db.moodCheckins.add({
+      id: crypto.randomUUID(),
+      date: newEntry.date,
+      mood: moodData.mood,
+      moodValue: moodData.moodValue,
+      secondaryEmotions: moodData.secondaryEmotions,
+      factors: moodData.factors,
+      note: 'Auto-generated from journal entry'
+    });
   };
 
   const handleDeleteEntry = async (id: string) => {

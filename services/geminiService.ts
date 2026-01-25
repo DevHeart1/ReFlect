@@ -186,25 +186,51 @@ export const generateGratitudePrompt = async (): Promise<string> => {
   }
 };
 
-export const analyzeSentiment = async (text: string): Promise<{ label: string; score: number; color: string }> => {
-  if (!ai || !text.trim()) return { label: 'Neutral', score: 50, color: 'text-gray-500' };
+export interface MoodAnalysis {
+  mood: string;
+  moodValue: number;
+  factors: string[];
+  secondaryEmotions: string[];
+  color: string;
+}
 
-  const prompt = `Analyze the sentiment of this text: "${text}". 
-    Return a JSON object with:
-    - label: A short 1-2 word emotion label (e.g., "Anxious", "Calm", "Joyful").
-    - score: A number 0-100 representing intensity.
-    - color: A tailwind text color class that matches the emotion (e.g., "text-red-500", "text-blue-500", "text-green-500", "text-amber-500").`;
+export const extractMoodFromJournal = async (text: string): Promise<MoodAnalysis> => {
+  // Default fallback
+  const fallback: MoodAnalysis = {
+    mood: 'Neutral',
+    moodValue: 3,
+    factors: [],
+    secondaryEmotions: [],
+    color: 'text-gray-500'
+  };
+
+  if (!ai || !text.trim() || text.length < 10) return fallback;
+
+  const prompt = `
+  Analyze this journal entry and extract emotional data.
+  Entry: "${text}"
+
+  Return a JSON object with:
+  1. mood: Primary emotion (One of: Radiant, Content, Neutral, Low, Distressed, Anxious, Angry, Excited, Grateful).
+  2. moodValue: Integer 1-5 (1=Distressed, 5=Radiant).
+  3. factors: Array of 1-3 strings identifying THE CAUSE (e.g. "Work", "Family", "Health", "Sleep", "Social").
+  4. secondaryEmotions: Array of 1-2 subtle emotions (e.g. "Hopeful", "Tired").
+  5. color: Tailwind text color class matching the mood (e.g. text-blue-500).
+  `;
 
   try {
-    const result = await generateContent(prompt, "You are an emotion analyzer. Respond ONLY in JSON.", true);
+    const result = await generateContent(prompt, "You are an empathetic psychologist. Respond ONLY in JSON.", true);
     const parsed = JSON.parse(result);
     return {
-      label: parsed.label || 'Neutral',
-      score: parsed.score || 50,
+      mood: parsed.mood || 'Neutral',
+      moodValue: parsed.moodValue || 3,
+      factors: parsed.factors || [],
+      secondaryEmotions: parsed.secondaryEmotions || [],
       color: parsed.color || 'text-gray-500'
     };
-  } catch {
-    return { label: 'Neutral', score: 50, color: 'text-gray-500' };
+  } catch (e) {
+    console.error("Mood extraction failed", e);
+    return fallback;
   }
 };
 

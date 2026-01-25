@@ -1,313 +1,136 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog } from './Dialog';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../utils/db';
-import { getMoodValue } from '../utils/storage';
-import { generateMoodInsights, MoodCheckin } from '../services/geminiService';
+import { generateMoodInsights, generatePatternInsights, MoodCheckin } from '../services/geminiService';
+import { MoodChart } from './MoodChart';
 
 export const DailyMoodTracker: React.FC = () => {
-  const [selectedMood, setSelectedMood] = useState<string | null>(null);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [selectedFactors, setSelectedFactors] = useState<string[]>([]);
-  const [note, setNote] = useState('');
-  const [showSuccess, setShowSuccess] = useState(false);
   const [insight, setInsight] = useState("Analyzing your recent emotional patterns...");
+  const [patternData, setPatternData] = useState<{ weeklyInsight: string; topFactorInsight: string } | null>(null);
   const [isInsightLoading, setIsInsightLoading] = useState(false);
 
-  // Cast recentMoods to compatible type if needed, or rely on duck typing since Dexie returns objects
-  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(5).toArray()) as unknown as MoodCheckin[] || [];
+  // Cast recentMoods to compatible type if needed
+  const recentMoods = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().limit(50).toArray()) as unknown as MoodCheckin[] || [];
 
   useEffect(() => {
     if (recentMoods.length > 0) {
       setIsInsightLoading(true);
+
+      // Generate general insight
       generateMoodInsights(recentMoods).then(text => {
         setInsight(text);
+      });
+
+      // Generate pattern stats
+      generatePatternInsights(recentMoods).then(data => {
+        setPatternData(data);
         setIsInsightLoading(false);
       }).catch(() => setIsInsightLoading(false));
     }
-  }, [recentMoods]);
+  }, [recentMoods.length]); // Only re-run if count changes to avoid thrashing
 
-  const moods = [
-    { label: 'Radiant', icon: 'sunny', color: 'text-amber-500', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-400', ring: 'ring-amber-400' },
-    { label: 'Content', icon: 'sentiment_satisfied', color: 'text-emerald-500', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-400', ring: 'ring-emerald-400' },
-    { label: 'Neutral', icon: 'sentiment_neutral', color: 'text-gray-500', bg: 'bg-gray-50 dark:bg-gray-700', border: 'border-gray-400', ring: 'ring-gray-400' },
-    { label: 'Low', icon: 'rainy', color: 'text-blue-500', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-400', ring: 'ring-blue-400' },
-    { label: 'Distressed', icon: 'thunderstorm', color: 'text-rose-500', bg: 'bg-rose-50 dark:bg-rose-900/20', border: 'border-rose-400', ring: 'ring-rose-400' },
-  ];
-
-  const secondaryEmotions = ['Anxious', 'Excited', 'Tired', 'Grateful', 'Frustrated', 'Inspired'];
-
-  const factors = [
-    { label: 'Sleep', icon: 'bedtime', color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400' },
-    { label: 'Exercise', icon: 'fitness_center', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400' },
-    { label: 'Social', icon: 'groups', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' },
-    { label: 'Work', icon: 'work', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' },
-  ];
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
-  };
-
-  const toggleFactor = (factor: string) => {
-    setSelectedFactors(prev => prev.includes(factor) ? prev.filter(f => f !== factor) : [...prev, factor]);
-  };
-
-  const handleSave = async () => {
-    if (!selectedMood) return;
-
-    await db.moodCheckins.add({
-      id: crypto.randomUUID(),
-      date: new Date().toISOString(),
-      mood: selectedMood,
-      moodValue: getMoodValue(selectedMood),
-      secondaryEmotions: selectedTags,
-      factors: selectedFactors,
-      note
-    });
-
-    // Show success dialog
-    setShowSuccess(true);
-
-    // Reset form
-    setSelectedMood(null);
-    setSelectedTags([]);
-    setSelectedFactors([]);
-    setNote('');
-  };
-
-  const getMoodColorClass = (moodLabel: string) => {
-    const mood = moods.find(m => m.label === moodLabel);
-    return mood ? mood.bg.split(' ')[0].replace('bg-', '') : 'gray-400';
-  };
-
+  // Helper for colors
   const getMoodRingColor = (moodLabel: string) => {
-    const mood = moods.find(m => m.label === moodLabel);
-    // specific mapping for dots
     if (moodLabel === 'Radiant') return 'bg-amber-400';
     if (moodLabel === 'Content') return 'bg-emerald-400';
     if (moodLabel === 'Neutral') return 'bg-gray-400';
     if (moodLabel === 'Low') return 'bg-blue-400';
     return 'bg-rose-400';
-  }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 md:px-10 md:py-10 animate-fade-in-up">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
-        <div>
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mb-2">Daily Check-in</h2>
-          <p className="text-gray-500 dark:text-gray-400 font-medium">Take a moment to reflect and track your emotional well-being.</p>
-        </div>
-        <div className="text-right">
-          <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Today</p>
-          <p className="text-xl font-bold text-gray-900 dark:text-white">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+    <div className="flex-1 overflow-y-auto w-full p-4 lg:p-10 animate-fade-in-up pb-24 lg:pb-10">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <header>
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight text-[#131516] dark:text-white">Mood Tracker</h2>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Your emotional journey, automatically analyzed from your journal entries.
           </p>
-        </div>
-      </div>
+        </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        {/* Main Tracker Column */}
-        <div className="col-span-1 lg:col-span-8 flex flex-col gap-8">
-
-          {/* Mood Selection */}
-          <section className="bg-card-light dark:bg-card-dark rounded-3xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-8 md:p-10 relative overflow-hidden">
-            <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/5 rounded-full blur-3xl"></div>
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">How are you feeling today?</h3>
-            <div className="flex flex-wrap justify-center gap-4 md:gap-8 mb-4">
-              {moods.map((mood) => (
-                <button
-                  key={mood.label}
-                  onClick={() => setSelectedMood(mood.label)}
-                  title={mood.label}
-                  className="group flex flex-col items-center gap-3 transition-transform hover:-translate-y-2 focus:outline-none"
-                >
-                  <div className={`w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center transition-all shadow-sm hover:shadow-lg border-2 
-                    ${mood.bg} 
-                    ${selectedMood === mood.label ? `${mood.border} ring-2 ring-offset-2 ${mood.ring} dark:ring-offset-card-dark` : 'border-transparent'} 
-                    ${selectedMood === mood.label ? 'scale-105' : ''}
-                  `}>
-                    <span className={`material-symbols-outlined text-5xl ${mood.color}`}>{mood.icon}</span>
-                  </div>
-                  <span className={`font-bold transition-colors ${selectedMood === mood.label ? 'text-primary dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>
-                    {mood.label}
-                  </span>
-                </button>
-              ))}
+        {/* AI Insight banner - Responsive & Visible */}
+        <div className="bg-gradient-to-r from-primary/10 to-transparent p-4 md:p-6 rounded-2xl border border-primary/20 flex flex-col md:flex-row gap-4 items-start relative overflow-hidden">
+          {isInsightLoading && (
+            <div className="absolute top-2 right-2">
+              <span className="material-symbols-outlined text-primary animate-spin">refresh</span>
             </div>
-          </section>
-
-          {/* Details Section (Restored Inline) */}
-          <section className="bg-card-light dark:bg-card-dark rounded-3xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-8">
-            <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary">tune</span>
-              Mood Details
-            </h4>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Secondary Emotions */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Secondary Emotions</label>
-                <div className="flex flex-wrap gap-2">
-                  {secondaryEmotions.map(tag => (
-                    <button
-                      key={tag}
-                      onClick={() => toggleTag(tag)}
-                      className={`px-4 py-2 rounded-lg border transition-all 
-                        ${selectedTags.includes(tag)
-                          ? 'bg-primary/10 border-primary text-primary font-medium'
-                          : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-primary/50'
-                        }`}
-                    >
-                      {tag}
-                    </button>
-                  ))}
-                  <button className="w-10 h-10 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:text-primary hover:border-primary transition-colors">
-                    <span className="material-symbols-outlined text-sm">add</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Factors */}
-              <div>
-                <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">What's affecting you?</label>
-                <div className="grid grid-cols-2 gap-3">
-                  {factors.map(factor => (
-                    <button
-                      key={factor.label}
-                      onClick={() => toggleFactor(factor.label)}
-                      className={`flex items-center gap-3 p-3 rounded-xl border text-left group transition-colors
-                        ${selectedFactors.includes(factor.label)
-                          ? 'border-primary bg-primary/5'
-                          : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
-                    >
-                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${factor.color}`}>
-                        <span className="material-symbols-outlined text-lg">{factor.icon}</span>
-                      </div>
-                      <span className={`text-sm font-bold ${selectedFactors.includes(factor.label) ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                        {factor.label}
-                      </span>
-                      {selectedFactors.includes(factor.label) && (
-                        <span className="material-symbols-outlined text-primary text-sm ml-auto">check</span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Note Area */}
-            <div className="mt-8">
-              <label className="block text-sm font-semibold text-gray-500 dark:text-gray-400 mb-3 uppercase tracking-wider">Quick Note</label>
-              <textarea
-                value={note}
-                onChange={(e) => setNote(e.target.value)}
-                className="w-full rounded-xl border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 focus:border-primary focus:ring-primary h-24 resize-none p-4 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 text-sm"
-                placeholder="Add any thoughts about your mood..."
-              ></textarea>
-            </div>
-
-            {/* Save Action */}
-            <div className="mt-8 flex justify-end">
-              <button
-                onClick={handleSave}
-                disabled={!selectedMood}
-                className={`px-8 py-3 rounded-xl font-bold shadow-lg transition-all transform flex items-center gap-2 ${selectedMood ? 'bg-primary hover:bg-primary/90 text-white hover:scale-105 active:scale-95 shadow-primary/20' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}`}
-              >
-                <span className="material-symbols-outlined">save</span>
-                Save Entry
-              </button>
-            </div>
-          </section>
-        </div>
-
-        {/* Sidebar Column */}
-        <div className="col-span-1 lg:col-span-4">
-          <section className="bg-card-light dark:bg-card-dark rounded-3xl shadow-soft border border-gray-100 dark:border-gray-700/50 p-6 h-full flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Recent Entries</h3>
-              <button className="text-xs font-bold text-primary hover:text-primary/80 uppercase tracking-wide">View All</button>
-            </div>
-
-            <div className="relative pl-4 border-l border-gray-200 dark:border-gray-700 space-y-8 pb-4">
-              {recentMoods.length === 0 ? (
-                <p className="text-sm text-gray-400 italic">No moods logged yet.</p>
-              ) : recentMoods.map(entry => (
-                <div key={entry.id} className="relative pl-6 group cursor-pointer">
-                  <div className={`absolute -left-[5px] top-1.5 w-2.5 h-2.5 rounded-full ${getMoodRingColor(entry.mood)} ring-4 ring-white dark:ring-card-dark`}></div>
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-xs font-bold text-gray-400">
-                      {new Date(entry.date).toLocaleDateString(undefined, { weekday: 'short', hour: 'numeric', minute: 'numeric' })}
-                    </span>
-                    {entry.factors.length > 0 && (
-                      <div className="flex gap-1">
-                        {entry.factors.slice(0, 2).map((f, i) => (
-                          <span key={i} className="w-2 h-2 rounded-full bg-gray-400" title={f}></span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <h4 className="text-base font-bold text-gray-800 dark:text-gray-100 group-hover:text-primary transition-colors">{entry.mood}</h4>
-                  <p className="text-sm text-gray-500 mt-1 line-clamp-2">{entry.note || 'No note added.'}</p>
-                  {entry.secondaryEmotions.length > 0 && (
-                    <div className="flex gap-2 mt-2 flex-wrap">
-                      {entry.secondaryEmotions.slice(0, 2).map(tag => (
-                        <span key={tag} className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full">{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-auto pt-6 border-t border-gray-100 dark:border-gray-800">
-              <div className="bg-primary/5 rounded-xl p-4 flex gap-3 items-start relative overflow-hidden">
-                {/* Loader overlay */}
-                {isInsightLoading && (
-                  <div className="absolute inset-0 bg-white/50 dark:bg-black/20 flex items-center justify-center backdrop-blur-[1px]">
-                    <span className="material-symbols-outlined text-primary animate-spin text-xl">refresh</span>
-                  </div>
-                )}
-                <span className="material-symbols-outlined text-primary mt-0.5">lightbulb</span>
-                <div>
-                  <p className="text-xs font-bold text-primary uppercase mb-1">AI Pattern Recognition</p>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed italic">
-                    "{insight}"
-                  </p>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <Dialog
-        isOpen={showSuccess}
-        onClose={() => setShowSuccess(false)}
-        title="Saved!"
-        type="success"
-        footer={
-          <button
-            onClick={() => setShowSuccess(false)}
-            className="px-6 py-2 bg-primary text-white rounded-lg font-bold shadow-lg shadow-primary/20"
-          >
-            Fantastic
-          </button>
-        }
-      >
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center animate-bounce-short">
-            <span className="material-symbols-outlined text-3xl">check</span>
+          )}
+          <span className="material-symbols-outlined text-primary text-3xl shrink-0">auto_awesome</span>
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-white text-lg">AI Mood Analysis</h3>
+            <p className="text-gray-600 dark:text-gray-300 leading-relaxed mt-1 text-sm md:text-base">
+              {insight || "Keep journaling to unlock deeper insights about your emotional patterns."}
+            </p>
           </div>
-          <p className="text-lg font-medium text-gray-800 dark:text-white">
-            Your mood has been logged successfully.
-          </p>
-          <p className="text-sm text-gray-500">
-            Keep up the great work of tracking your emotions!
-          </p>
         </div>
-      </Dialog>
+
+        {/* Charts Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft dark:shadow-none dark:border dark:border-gray-800">
+            <h3 className="font-bold text-gray-900 dark:text-white mb-4">Weekly Trend</h3>
+            <div className="h-64 w-full">
+              <MoodChart />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <div className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft dark:shadow-none dark:border dark:border-gray-800 flex-1">
+              <h3 className="font-bold text-gray-900 dark:text-white mb-4">Primary Drivers</h3>
+              {patternData ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2 text-sm font-bold text-gray-500 uppercase tracking-wider">
+                      <span className="material-symbols-outlined text-sm">calendar_month</span>
+                      Weekly Pattern
+                    </div>
+                    <p className="text-gray-800 dark:text-gray-200 font-medium text-sm">{patternData.weeklyInsight}</p>
+                  </div>
+                  <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-xl">
+                    <div className="flex items-center gap-2 mb-2 text-sm font-bold text-gray-500 uppercase tracking-wider">
+                      <span className="material-symbols-outlined text-sm">psychology</span>
+                      Top Factor
+                    </div>
+                    <p className="text-gray-800 dark:text-gray-200 font-medium text-sm">{patternData.topFactorInsight}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
+                  <div className="text-center">
+                    <span className="material-symbols-outlined text-3xl mb-2">bar_chart</span>
+                    <p>Log a few more entries to see patterns</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Mood List */}
+        <section className="bg-card-light dark:bg-card-dark rounded-2xl shadow-soft dark:shadow-none dark:border dark:border-gray-800 p-6">
+          <h3 className="font-bold text-gray-900 dark:text-white mb-6">Recent Mood History</h3>
+          <div className="space-y-6">
+            {recentMoods.slice(0, 5).map(entry => (
+              <div key={entry.id} className="flex gap-4 items-start">
+                <div className={`w-3 h-3 mt-1.5 rounded-full shrink-0 ${getMoodRingColor(entry.mood)}`}></div>
+                <div>
+                  <div className="flex flex-wrap gap-2 items-center mb-1">
+                    <span className="text-sm font-bold text-gray-900 dark:text-white">{entry.mood}</span>
+                    <span className="text-xs text-gray-400">• {new Date(entry.date).toLocaleDateString()}</span>
+                  </div>
+                  {entry.note && <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2 italic">"{entry.note}"</p>}
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {entry.factors.map(f => (
+                      <span key={f} className="text-[10px] font-bold px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 rounded-full">{f}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+            {recentMoods.length === 0 && <p className="text-gray-400 text-sm">No mood history available.</p>}
+          </div>
+        </section>
+
+      </div>
     </div>
   );
 };
