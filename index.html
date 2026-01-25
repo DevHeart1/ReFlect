@@ -36,6 +36,25 @@
   }
 }
 </script>
+    <script>
+        (function () {
+            try {
+                const settings = JSON.parse(localStorage.getItem('reflect_app_settings') || '{}');
+                const theme = settings.theme || 'system';
+                const root = document.documentElement;
+
+                let effectiveTheme = theme;
+                if (theme === 'system') {
+                    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+
+                root.classList.remove('light', 'dark');
+                root.classList.add(effectiveTheme);
+            } catch (e) {
+                console.error('Failed to apply initial theme', e);
+            }
+        })();
+    </script>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-[#131516] dark:text-[#f1f3f3]">
