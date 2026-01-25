@@ -129,6 +129,7 @@ export const authService = {
 
     logout: () => {
         localStorage.removeItem(SESSION_KEY);
+        window.dispatchEvent(new Event('auth-change'));
     },
 
     updateProfile: (updatedData: Partial<UserProfile>) => {

@@ -163,7 +163,6 @@ export const ProfileSettingsPage: React.FC = () => {
                                 <button
                                     onClick={() => {
                                         authService.logout();
-                                        window.location.reload();
                                     }}
                                     className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-100 dark:border-red-900/30"
                                 >

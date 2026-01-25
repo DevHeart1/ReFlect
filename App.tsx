@@ -221,6 +221,18 @@ const App: React.FC = () => {
     };
 
     applySettings();
+
+    const handleAuthChange = () => {
+      setIsAuthenticated(!!authService.getCurrentSession());
+    };
+
+    window.addEventListener('storage', handleAuthChange);
+    window.addEventListener('auth-change', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('storage', handleAuthChange);
+      window.removeEventListener('auth-change', handleAuthChange);
+    };
   }, []);
 
   const handleSaveEntry = async (title: string, content: string) => {

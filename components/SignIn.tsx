@@ -109,12 +109,6 @@ export const SignIn: React.FC<SignInProps> = ({ onSignIn, onSignUp }) => {
                   text="signin_with"
                 />
               </div>
-              <button type="button" className="flex items-center justify-center gap-2 px-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-card-dark hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-sm font-semibold text-gray-700 dark:text-gray-200 shadow-sm">
-                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                  <path d="M17.05 20.28c-.96.95-2.04 1.72-3.23 1.72-1.13 0-1.52-.69-2.82-.69-1.31 0-1.76.67-2.83.69-1.13.02-2.11-.72-3.15-1.74-2.12-2.06-3.26-5.83-3.26-8.23 0-3.92 2.44-5.99 4.79-5.99 1.19 0 2.14.73 2.92.73.74 0 1.96-.86 3.35-.86 1.45 0 3.3.61 4.54 2.42-3.12 1.55-2.61 5.94.51 7.05-.82 2.01-1.92 3.97-2.82 4.9zm-4.32-15.68c-.01-2.2 1.83-4.04 4.04-4.04.03 2.22-1.84 4.04 4.04z"></path>
-                </svg>
-                Apple
-              </button>
             </div>
 
             <div className="relative py-4">
