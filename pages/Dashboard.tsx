@@ -4,9 +4,8 @@ import { MoodChart } from '../components/MoodChart';
 import { RecentEntries } from '../components/RecentEntries';
 import { JournalEntry } from '../types';
 import { generateDailyQuote, generateQuickPrompts, DailyQuote, QuickPrompt } from '../services/geminiService';
-import { db } from '../utils/db';
-import { useLiveQuery } from 'dexie-react-hooks';
 import { DEFAULT_PROFILE } from '../utils/storage';
+import { authService } from '../services/authService';
 
 interface DashboardProps {
     entries: JournalEntry[];
@@ -16,9 +15,35 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
     const navigate = useNavigate();
     const [quote, setQuote] = useState<DailyQuote | null>(null);
     const [quickPrompts, setQuickPrompts] = useState<QuickPrompt[] | null>(null);
+    const [profile, setProfile] = useState(DEFAULT_PROFILE);
 
-    // Use live query for real-time updates
-    const profile = useLiveQuery(() => db.profile.get('current')) || DEFAULT_PROFILE;
+    // Fetch user profile from Supabase
+    useEffect(() => {
+        const fetchProfile = async () => {
+            const user = await authService.getCurrentUser();
+            if (user) {
+                setProfile({
+                    name: user.name,
+                    email: user.email,
+                    avatarUrl: user.avatarUrl,
+                    isPro: user.isPro
+                });
+            }
+        };
+        fetchProfile();
+
+        // Listen for auth changes
+        const handleAuthChange = () => {
+            fetchProfile();
+        };
+        window.addEventListener('auth-change', handleAuthChange);
+        window.addEventListener('profile-updated', handleAuthChange);
+
+        return () => {
+            window.removeEventListener('auth-change', handleAuthChange);
+            window.removeEventListener('profile-updated', handleAuthChange);
+        };
+    }, []);
 
     useEffect(() => {
         const fetchAIContent = async () => {
