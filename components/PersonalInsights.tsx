@@ -1,6 +1,4 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../utils/db';
 import { MoodCheckin } from '../utils/storage';
 import { generateMoodInsights, generatePatternInsights, PatternInsights } from '../services/geminiService';
 import { MarkdownRenderer } from './MarkdownRenderer';
@@ -8,8 +6,11 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 
 type TimeRange = '30days' | '3months';
 
-export const PersonalInsights: React.FC = () => {
-  const entries = useLiveQuery(() => db.moodCheckins.orderBy('date').reverse().toArray()) || [];
+interface PersonalInsightsProps {
+  moods: MoodCheckin[];
+}
+
+export const PersonalInsights: React.FC<PersonalInsightsProps> = ({ moods }) => {
   const [timeRange, setTimeRange] = useState<TimeRange>('30days');
   const [filteredEntries, setFilteredEntries] = useState<MoodCheckin[]>([]);
   const [streak, setStreak] = useState(0);
@@ -21,7 +22,7 @@ export const PersonalInsights: React.FC = () => {
 
   useEffect(() => {
     filterData();
-  }, [entries, timeRange]);
+  }, [moods, timeRange]);
 
   // Fetch AI Pattern Insights
   useEffect(() => {
@@ -35,22 +36,28 @@ export const PersonalInsights: React.FC = () => {
   }, [filteredEntries]);
 
   const filterData = () => {
-    if (entries.length === 0) return;
+    if (moods.length === 0) {
+      setFilteredEntries([]);
+      // Also reset metrics if no data
+      setStreak(0);
+      setTopEmotion({ label: 'N/A', count: 0 });
+      return;
+    }
 
     const now = new Date();
     const cutoff = new Date();
     if (timeRange === '30days') cutoff.setDate(now.getDate() - 30);
     if (timeRange === '3months') cutoff.setMonth(now.getMonth() - 3);
 
-    const filtered = entries.filter(e => new Date(e.date) >= cutoff).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const filtered = moods.filter(e => new Date(e.date) >= cutoff).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     setFilteredEntries(filtered);
-    calculateMetrics(filtered); // Calculate metrics based on filtered view or all time? Usually filtered.
+    calculateMetrics(filtered);
   };
 
   const calculateMetrics = (data: MoodCheckin[]) => {
-    // 1. Calculate Streak (This usually implies "Current Streak" leading up to today, so it should probably check ALL entries, not just filtered, but for now let's use all entries for streak to be accurate)
-    // Actually, streak is an "all time" stat usually. Let's recalculate streak using ALL entries from state.
-    const sortedAll = [...entries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // 1. Calculate Streak
+    // Use all moods for streak calculation
+    const sortedAll = [...moods].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     let currentStreak = 0;
     const today = new Date();
@@ -101,8 +108,7 @@ export const PersonalInsights: React.FC = () => {
 
     const width = 800;
     const height = 240;
-    // Use filtered entries, limit to fit chart if needed, but filtered is already limited by time
-    // Let's take up to 30 points to keep smooth
+    // Use filtered entries, limit to fit chart if needed
     const chartData = filteredEntries.slice(0, 30).reverse();
     if (chartData.length === 0) return "";
 
@@ -114,12 +120,9 @@ export const PersonalInsights: React.FC = () => {
       if (i === 0) return;
       const x = i * stepX;
       const y = getY(d.moodValue);
-      // Bezier curve could be nicer but straight lines are fine for now
       path += ` L${x},${y}`;
     });
     return path;
-
-    // For smooth curve (Catmull-Rom or similar would be better), but simple L is functional
   };
 
   const getGradientPath = () => {
@@ -147,7 +150,7 @@ export const PersonalInsights: React.FC = () => {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 = Sun, 1 = Mon...
 
-    // Adjust for Monday start if desired, but let's stick to Sun start for simplicity or Mon
+    // Adjust for Monday start if desired
     // Let's assume Mon start for array: 0=Mon ... 6=Sun
     const adjustedFirstDay = firstDayOfMonth === 0 ? 6 : firstDayOfMonth - 1;
 
@@ -155,12 +158,11 @@ export const PersonalInsights: React.FC = () => {
 
     for (let i = 1; i <= daysInMonth; i++) {
       const dateStr = new Date(year, month, i).toDateString(); // Compare date strings
-      const entry = entries.find(e => new Date(e.date).toDateString() === dateStr);
+      const entry = moods.find(e => new Date(e.date).toDateString() === dateStr);
       days.push(entry || { id: `empty-${i}`, date: new Date(year, month, i).toISOString(), mood: 'none', moodValue: 0, secondaryEmotions: [], factors: [], note: '' });
-      // We push a "dummy" entry if none exists so we can map it
     }
     return days;
-  }, [entries]);
+  }, [moods]);
 
   const getMoodColor = (mood: string) => {
     switch (mood) {
