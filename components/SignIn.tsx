@@ -92,8 +92,14 @@ export const SignIn: React.FC<SignInProps> = ({ onSignIn, onSignUp }) => {
                 onSuccess={async (credentialResponse: CredentialResponse) => {
                   if (credentialResponse.credential) {
                     try {
-                      await authService.loginWithGoogle(credentialResponse.credential);
-                      onSignIn();
+                      const { user, isNewUser } = await authService.loginWithGoogle(credentialResponse.credential);
+
+                      // New users go to onboarding, existing users sign in directly
+                      if (isNewUser) {
+                        onSignUp();
+                      } else {
+                        onSignIn();
+                      }
                     } catch (e) {
                       setError('Google login failed');
                     }

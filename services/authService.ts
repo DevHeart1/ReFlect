@@ -66,7 +66,7 @@ export const authService = {
         return mapSupabaseUser(data.user);
     },
 
-    loginWithGoogle: async (idToken: string): Promise<User> => {
+    loginWithGoogle: async (idToken: string): Promise<{ user: User; isNewUser: boolean }> => {
         const { data, error } = await supabase.auth.signInWithIdToken({
             provider: 'google',
             token: idToken,
@@ -78,7 +78,16 @@ export const authService = {
         // Clear legacy session markers just in case
         localStorage.removeItem('reflect_session');
 
-        return mapSupabaseUser(data.user);
+        // Check if user was created in the last 10 seconds (new signup)
+        const createdAt = new Date(data.user.created_at);
+        const now = new Date();
+        const timeDiff = (now.getTime() - createdAt.getTime()) / 1000; // seconds
+        const isNewUser = timeDiff < 10;
+
+        return {
+            user: mapSupabaseUser(data.user),
+            isNewUser
+        };
     },
 
     logout: async () => {
