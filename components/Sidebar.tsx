@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { useLiveQuery } from 'dexie-react-hooks';
-import { db } from '../utils/db';
 import { DEFAULT_PROFILE } from '../utils/storage';
+import { authService } from '../services/authService';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,8 +11,35 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [profile, setProfile] = useState(DEFAULT_PROFILE);
 
-  const profile = useLiveQuery(() => db.profile.get('current')) || DEFAULT_PROFILE;
+  // Fetch user profile from Supabase
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const user = await authService.getCurrentUser();
+      if (user) {
+        setProfile({
+          name: user.name,
+          email: user.email,
+          avatarUrl: user.avatarUrl,
+          isPro: user.isPro
+        });
+      }
+    };
+    fetchProfile();
+
+    // Listen for auth changes
+    const handleAuthChange = () => {
+      fetchProfile();
+    };
+    window.addEventListener('auth-change', handleAuthChange);
+    window.addEventListener('profile-updated', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('auth-change', handleAuthChange);
+      window.removeEventListener('profile-updated', handleAuthChange);
+    };
+  }, []);
 
   const navItems = [
     { path: '/', label: 'Journal', icon: 'book', exact: true },
