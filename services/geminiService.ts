@@ -135,21 +135,19 @@ const generateContent = async (prompt: string, systemInstruction?: string, jsonM
     // Remove structure thinking blocks if present
     return text.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
   } catch (error: any) {
-    // Check for 429 or quota exceeded
-    // Common Gemini 429 error structure involves status or code
-    if (
-      error?.status === 429 ||
-      error?.code === 429 ||
-      error?.toString().includes('RESOURCE_EXHAUSTED') ||
-      error?.toString().includes('Quota exceeded') ||
-      error?.message?.includes('429')
-    ) {
-      console.warn("Gemini quota exceeded (429), switching to Groq fallback...", error);
-      return await generateContentWithGroq(prompt, systemInstruction, jsonMode);
-    }
+    // Check for 429, quota exceeded, or ANY error to ensure fallback
+    console.warn("Gemini generation failed, attempting Groq fallback. Error:", error);
 
-    console.error("Gemini API Error:", error);
-    throw error;
+    // We try fallback for ANY error to satisfy user requirement "always fallback"
+    try {
+        return await generateContentWithGroq(prompt, systemInstruction, jsonMode);
+    } catch (groqError) {
+        console.error("Groq Fallback also failed:", groqError);
+        // Throw the original Gemini error if Groq also fails, or the Groq error?
+        // Usually better to throw the fallback error or just return empty?
+        // Let's rethrow for now so UI knows it failed.
+        throw groqError;
+    }
   }
 };
 
