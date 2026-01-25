@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { Sidebar } from './components/Sidebar';
 import { JournalModal } from './components/JournalModal';
 import { SignIn } from './components/SignIn';
@@ -282,69 +281,68 @@ const App: React.FC = () => {
   }
 
   return (
-    <GoogleOAuthProvider clientId="528479351223-t5i515j80h3ruroioj3noma57q8fmeig.apps.googleusercontent.com">
-      <Router>
-        <div className="flex h-screen bg-background-light dark:bg-background-dark text-[#131516] dark:text-[#f1f3f3] overflow-hidden font-display">
-          <Sidebar
-            isOpen={isMobileMenuOpen}
-            closeMobileMenu={() => setIsMobileMenuOpen(false)}
-          />
+  return (
+    <Router>
+      <div className="flex h-screen bg-background-light dark:bg-background-dark text-[#131516] dark:text-[#f1f3f3] overflow-hidden font-display">
+        <Sidebar
+          isOpen={isMobileMenuOpen}
+          closeMobileMenu={() => setIsMobileMenuOpen(false)}
+        />
 
-          {/* Main Content */}
-          <main className="flex-1 flex flex-col h-full relative z-10 w-full">
-            {/* Mobile Header */}
-            <header className="lg:hidden flex items-center justify-between p-4 bg-card-light dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-30">
-              <div className="flex items-center gap-2">
-                <span className="material-symbols-outlined text-primary dark:text-white">spa</span>
-                <span className="font-bold text-lg text-primary dark:text-white">Re-Flect</span>
-              </div>
-              <button
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="p-2 text-gray-600 dark:text-gray-300"
-              >
-                <span className="material-symbols-outlined">menu</span>
-              </button>
-            </header>
-
-            {/* Routes */}
-            <div className="flex-1 overflow-y-auto">
-              <Routes>
-                <Route path="/" element={<Dashboard entries={entries} />} />
-                <Route path="/mood-tracker" element={<MoodTrackerPage />} />
-                <Route path="/insights" element={<InsightsPage />} />
-                <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
-                <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />
-                <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
-
-                <Route path="/settings" element={<SettingsLayout />}>
-                  <Route index element={<Navigate to="general" replace />} />
-                  <Route path="general" element={<GeneralSettingsPage />} />
-                  <Route path="profile" element={<ProfileSettingsPage />} />
-                  <Route path="privacy" element={<SettingsPage />} />
-                  <Route path="data" element={<DataManagementPage />} />
-                  <Route path="notifications" element={<NotificationSettingsPage />} />
-                </Route>
-
-                <Route path="/year-report" element={<YearReportPage />} />
-                <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
-                <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
-                <Route path="/notifications" element={<NotificationsPage />} />
-
-                {/* Catch-all redirect */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
+        {/* Main Content */}
+        <main className="flex-1 flex flex-col h-full relative z-10 w-full">
+          {/* Mobile Header */}
+          <header className="lg:hidden flex items-center justify-between p-4 bg-card-light dark:bg-card-dark border-b border-gray-100 dark:border-gray-800 sticky top-0 z-30">
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary dark:text-white">spa</span>
+              <span className="font-bold text-lg text-primary dark:text-white">Re-Flect</span>
             </div>
-          </main>
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-gray-600 dark:text-gray-300"
+            >
+              <span className="material-symbols-outlined">menu</span>
+            </button>
+          </header>
 
-          {/* Modals */}
-          <JournalModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSaveEntry}
-          />
-        </div>
-      </Router>
-    </GoogleOAuthProvider>
+          {/* Routes */}
+          <div className="flex-1 overflow-y-auto">
+            <Routes>
+              <Route path="/" element={<Dashboard entries={entries} />} />
+              <Route path="/mood-tracker" element={<MoodTrackerPage />} />
+              <Route path="/insights" element={<InsightsPage />} />
+              <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
+              <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />
+              <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />
+
+              <Route path="/settings" element={<SettingsLayout />}>
+                <Route index element={<Navigate to="general" replace />} />
+                <Route path="general" element={<GeneralSettingsPage />} />
+                <Route path="profile" element={<ProfileSettingsPage />} />
+                <Route path="privacy" element={<SettingsPage />} />
+                <Route path="data" element={<DataManagementPage />} />
+                <Route path="notifications" element={<NotificationSettingsPage />} />
+              </Route>
+
+              <Route path="/year-report" element={<YearReportPage />} />
+              <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
+              <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
+
+              {/* Catch-all redirect */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </main>
+
+        {/* Modals */}
+        <JournalModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveEntry}
+        />
+      </div>
+    </Router>
   );
 };
 
