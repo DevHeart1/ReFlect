@@ -1,4 +1,5 @@
 import { UserProfile, DEFAULT_PROFILE } from '../utils/storage';
+import { jwtDecode } from 'jwt-decode';
 
 const USERS_KEY = 'reflect_users';
 const SESSION_KEY = 'reflect_session';
@@ -83,6 +84,47 @@ export const authService = {
 
         localStorage.setItem(SESSION_KEY, user.id);
         return user;
+    },
+
+    loginWithGoogle: async (token: string): Promise<User> => {
+        try {
+            const decoded: any = jwtDecode(token);
+
+            const email = decoded.email;
+            const name = decoded.name;
+            const avatarUrl = decoded.picture;
+
+            // Check if user exists
+            const users = authService.getUsers();
+            let user = users.find(u => u.email === email);
+
+            if (!user) {
+                // Create new user automatically from Google data
+                user = {
+                    id: crypto.randomUUID(),
+                    name,
+                    email,
+                    passwordHash: '', // No password for Google users
+                    avatarUrl: avatarUrl || DEFAULT_PROFILE.avatarUrl,
+                    isPro: false,
+                    joinedDate: new Date().toISOString()
+                };
+                users.push(user);
+                localStorage.setItem(USERS_KEY, JSON.stringify(users));
+            } else {
+                // Update avatar if changed (optional)
+                if (avatarUrl && user.avatarUrl !== avatarUrl) {
+                    user.avatarUrl = avatarUrl;
+                    localStorage.setItem(USERS_KEY, JSON.stringify(users));
+                }
+            }
+
+            localStorage.setItem(SESSION_KEY, user.id);
+            return user;
+        } catch (e) {
+            console.error('Google login error', e);
+            throw new Error('Failed to login with Google');
+        }
     },
 
     logout: () => {
