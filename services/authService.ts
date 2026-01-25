@@ -75,12 +75,25 @@ export const authService = {
         if (error) throw error;
         if (!data.user) throw new Error('Google Login failed');
 
+        // Clear legacy session markers just in case
+        localStorage.removeItem('reflect_session');
+
         return mapSupabaseUser(data.user);
     },
 
     logout: async () => {
         await supabase.auth.signOut();
+
+        // Clear legacy local storage to prevent stale data
+        localStorage.removeItem('reflect_session');
+        localStorage.removeItem('reflect_users');
+        localStorage.removeItem('reflect_user_profile');
+        localStorage.removeItem('reflect_app_settings');
+        // entries and moods might be migrated, so maybe keep them or clear if we want fresh start?
+        // Let's clear profile/session at least.
+
         window.dispatchEvent(new Event('auth-change'));
+        window.location.reload(); // Force reload to clear any in-memory state
     },
 
     updateProfile: async (updatedData: Partial<UserProfile>) => {
