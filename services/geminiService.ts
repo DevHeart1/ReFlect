@@ -1,6 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { Groq } from "groq-sdk";
 import { TemplateBlock } from "../types";
+import { db } from "../utils/db";
 
 // Get API key from Vite environment variables
 // Get API key from Vite environment variables
@@ -51,11 +52,41 @@ const generateContentWithGroq = async (prompt: string, systemInstruction?: strin
     });
 
     const content = chatCompletion.choices[0]?.message?.content || "";
-    // Remove structure thinking blocks if present
     return content.replace(/<think>[\s\S]*?<\/think>/g, "").trim();
   } catch (err) {
     console.error("Groq API Error:", err);
     throw err;
+  }
+};
+
+const getContextString = async (): Promise<string> => {
+  try {
+    // Fetch last 5 journal entries
+    const recentEntries = await db.journalEntries.orderBy('date').reverse().limit(5).toArray();
+
+    // Fetch last 5 mood checkins
+    const recentMoods = await db.moodCheckins.orderBy('date').reverse().limit(5).toArray();
+
+    let context = "USER CONTEXT (Recent History):\n";
+
+    if (recentEntries.length > 0) {
+      context += "Recent Journals:\n";
+      recentEntries.forEach(e => {
+        context += `- [${new Date(e.date).toLocaleDateString()}] ${e.title}: ${e.excerpt}\n`;
+      });
+    }
+
+    if (recentMoods.length > 0) {
+      context += "\nRecent Moods:\n";
+      recentMoods.forEach(m => {
+        context += `- [${new Date(m.date).toLocaleDateString()}] Mood: ${m.mood} (Val: ${m.moodValue}). Factors: ${m.factors.join(', ')}. Note: "${m.note}"\n`;
+      });
+    }
+
+    return context;
+  } catch (e) {
+    console.warn("Failed to retrieve context:", e);
+    return "";
   }
 };
 
@@ -75,6 +106,15 @@ const generateContent = async (prompt: string, systemInstruction?: string, jsonM
   }
 
   try {
+    let finalSystemInstruction = systemInstruction || "";
+
+    // Inject context if not explicitly disabled (could add flag later if needed)
+    // For now, we always try to add context for main generation tasks
+    const context = await getContextString();
+    if (context) {
+      finalSystemInstruction += `\n\n${context}\n\nIMPORTANT: Use the above USER CONTEXT to personalize your response. Refer to specific details (e.g., "Since you felt sad yesterday...") if relevant.`;
+    }
+
     const response = await ai.models.generateContent({
       model: MODEL_NAME,
       contents: [
@@ -86,7 +126,7 @@ const generateContent = async (prompt: string, systemInstruction?: string, jsonM
       config: {
         ...DEFAULT_CONFIG,
         responseMimeType: jsonMode ? 'application/json' : 'text/plain',
-        systemInstruction: systemInstruction,
+        systemInstruction: finalSystemInstruction,
       }
     });
     // Error said: Type 'String' has no call signatures. So it is a property.
