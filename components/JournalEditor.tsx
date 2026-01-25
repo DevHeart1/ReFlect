@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useLocation } from 'react-router-dom';
-import { generateMindfulnessPrompt, generateThoughts, analyzeSentiment, generateDeepReflectPrompt, evaluateGoalProgress, MoodCheckin } from '../services/geminiService';
+import { generateMindfulnessPrompt, generateThoughts, generateDeepReflectPrompt, evaluateGoalProgress, MoodCheckin } from '../services/geminiService';
 import { RichTextEditor } from './editor/RichTextEditor';
 import { Template } from '../types';
 import { useLiveQuery } from 'dexie-react-hooks';
@@ -22,6 +22,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const [title, setTitle] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
 
   // Real Data Integration
   const entries = useLiveQuery(() => db.journalEntries.toArray()) || [];
@@ -161,20 +162,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
     }
   };
 
-  // Analyze sentiment periodically (keep existing)
-  useEffect(() => {
-    const timeoutId = setTimeout(async () => {
-      if (content.length > 50) {
-        setIsAnalyzing(true);
-        const plainText = content.replace(/<[^>]+>/g, '');
-        const result = await analyzeSentiment(plainText);
-        setSentiment(result);
-        setIsAnalyzing(false);
-      }
-    }, 2000);
 
-    return () => clearTimeout(timeoutId);
-  }, [content]);
 
   const insertText = (text: string) => {
     if (editorRef.current) {
@@ -311,181 +299,212 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
         )}
       </div>
 
+      {/* Mobile AI Toggle FAB (Floating Action Button) */}
+      {!isFocusMode && (
+        <button
+          onClick={() => setIsAiSidebarOpen(!isAiSidebarOpen)}
+          className="xl:hidden fixed bottom-24 right-6 z-50 w-12 h-12 bg-white dark:bg-card-dark text-primary shadow-lg rounded-full flex items-center justify-center border border-gray-200 dark:border-gray-700 active:scale-95 transition-transform"
+          title="Toggle AI Companion"
+        >
+          <span className="material-symbols-outlined">
+            {isAiSidebarOpen ? 'close' : 'smart_toy'}
+          </span>
+        </button>
+      )}
+
       {/* Right Panel: AI Assistant */}
       {!isFocusMode && (
-        <aside className="w-[340px] hidden xl:flex flex-col bg-card-light dark:bg-card-dark/50 border-l border-gray-100 dark:border-gray-800 relative z-10 shrink-0 animate-fade-in-right">
-          <div className="flex items-center justify-between p-6 pb-2">
-            <div className="flex items-center gap-2">
-              <span className={`material-symbols-outlined ${isDeepReflectMode ? 'text-indigo-500 animate-pulse' : 'text-primary'}`}>
-                {isDeepReflectMode ? 'psychology' : 'auto_awesome'}
-              </span>
-              <h3 className="text-[#131516] dark:text-white text-base font-bold">
-                {isDeepReflectMode ? 'Deep Reflect' : 'Insight Companion'}
-              </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              {/* Mode Toggle */}
-              <button
-                onClick={() => setDeepReflectMode(!isDeepReflectMode)}
-                className={`text-xs font-bold px-2 py-1 rounded-md transition-all ${isDeepReflectMode ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'}`}
-              >
-                {isDeepReflectMode ? 'Active' : 'Enable'}
-              </button>
-              <button onClick={() => setIsFocusMode(true)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" title="Hide Sidebar">
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-          </div>
+        <>
+          {/* Mobile Overlay */}
+          {isAiSidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-30 xl:hidden"
+              onClick={() => setIsAiSidebarOpen(false)}
+            />
+          )}
 
-          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
-
-            {/* Goal Setting (If none) */}
-            {!longTermGoal && (
-              <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-card-dark rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/20">
-                <div className="flex items-center gap-2 mb-2 text-indigo-600 dark:text-indigo-400">
-                  <span className="material-symbols-outlined text-sm">flag</span>
-                  <span className="text-xs font-bold uppercase">Set a Focus Goal</span>
-                </div>
-                <input
-                  type="text"
-                  placeholder="e.g. Reduce anxiety..."
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const val = e.currentTarget.value;
-                      if (val.trim()) useAIStore.getState().setLongTermGoal(val.trim());
-                    }
-                  }}
-                  className="w-full bg-white dark:bg-gray-800 text-sm p-2 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-                />
+          <aside className={`
+            fixed inset-y-0 right-0 z-40 w-[340px] bg-card-light dark:bg-card-dark/95 backdrop-blur-md border-l border-gray-100 dark:border-gray-800 shadow-2xl transition-transform duration-300 ease-in-out
+            xl:static xl:flex xl:transform-none xl:shadow-none xl:bg-card-light xl:dark:bg-card-dark/50
+            ${isAiSidebarOpen ? 'translate-x-0' : 'translate-x-full xl:translate-x-0'}
+            flex flex-col h-full
+          `}>
+            <div className="flex items-center justify-between p-6 pb-2">
+              <div className="flex items-center gap-2">
+                <span className={`material-symbols-outlined ${isDeepReflectMode ? 'text-indigo-500 animate-pulse' : 'text-primary'}`}>
+                  {isDeepReflectMode ? 'psychology' : 'auto_awesome'}
+                </span>
+                <h3 className="text-[#131516] dark:text-white text-base font-bold">
+                  {isDeepReflectMode ? 'Deep Reflect' : 'Insight Companion'}
+                </h3>
               </div>
-            )}
-            {/* Goal Tracker Widget */}
-            {longTermGoal && goalStatus && (
-              <div className="flex flex-col gap-3">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Goal</p>
-                <div className={`bg-white dark:bg-card-dark border rounded-2xl p-4 shadow-sm relative overflow-hidden group ${goalStatus.status === 'at_risk' ? 'border-red-200 dark:border-red-900/30' : goalStatus.status === 'needs_attention' ? 'border-amber-200 dark:border-amber-900/30' : 'border-emerald-200 dark:border-emerald-900/30'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate" title={longTermGoal}>{longTermGoal}</h4>
-                    <span className={`material-symbols-outlined text-lg ${goalStatus.status === 'at_risk' ? 'text-red-500' : goalStatus.status === 'needs_attention' ? 'text-amber-500' : 'text-emerald-500'}`}>
-                      {goalStatus.status === 'at_risk' ? 'warning' : goalStatus.status === 'needs_attention' ? 'priority_high' : 'check_circle'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">{goalStatus.insight}</p>
-                  <div className={`text-[10px] font-bold px-2 py-1 rounded-lg inline-block ${goalStatus.status === 'at_risk' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                    Tip: {goalStatus.suggestion}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Real-time Sentiment Analysis */}
-            <div className="flex flex-col gap-3">
-              <div className="flex justify-between items-center">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Vibe</p>
-                {isAnalyzing && <span className="text-[10px] text-primary animate-pulse">Analyzing...</span>}
-              </div>
-              <div className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm relative overflow-hidden group">
-                {/* Decorative gradient blur based on sentiment color */}
-                <div className={`absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 opacity-10 rounded-full blur-2xl transition-all ${sentiment.color.replace('text-', 'bg-')}`}></div>
-
-                <div className="flex items-center gap-3 mb-3 relative z-10">
-                  <div className={`size-10 rounded-full flex items-center justify-center ${sentiment.color.replace('text-', 'bg-').replace('500', '50')} ${sentiment.color}`}>
-                    <span className="material-symbols-outlined">
-                      {sentiment.score > 70 ? 'sentiment_very_satisfied' : sentiment.score > 40 ? 'sentiment_satisfied' : 'sentiment_dissatisfied'}
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{sentiment.label}</p>
-                    <p className="text-xs text-gray-500">{sentiment.score}% Intensity</p>
-                  </div>
-                </div>
-
-                <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1 overflow-hidden">
-                  <div
-                    className={`h-1.5 rounded-full transition-all duration-1000 ${sentiment.color.replace('text-', 'bg-')}`}
-                    style={{ width: `${sentiment.score}%` }}
-                  ></div>
-                </div>
-                <div className="flex justify-between text-[10px] text-gray-400 font-medium">
-                  <span>Low</span>
-                  <span>Moderate</span>
-                  <span>High</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Follow-up Prompts */}
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Deepen Your Thought</p>
+              <div className="flex items-center gap-2">
+                {/* Mode Toggle */}
                 <button
-                  onClick={handleRefreshPrompts}
-                  disabled={isGenerating || isPromptsLoading}
-                  className="text-primary text-[10px] font-bold hover:underline disabled:opacity-50"
+                  onClick={() => setDeepReflectMode(!isDeepReflectMode)}
+                  className={`text-xs font-bold px-2 py-1 rounded-md transition-all ${isDeepReflectMode ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'}`}
                 >
-                  {isGenerating ? 'Thinking...' : 'Refresh'}
+                  {isDeepReflectMode ? 'Active' : 'Enable'}
+                </button>
+                <button onClick={() => setIsFocusMode(true)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hidden xl:block" title="Hide Sidebar">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+                <button onClick={() => setIsAiSidebarOpen(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 xl:hidden" title="Close Sidebar">
+                  <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
+            </div>
 
-              {isPromptsLoading ? (
-                <div className="space-y-3">
-                  <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
-                  <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse delay-75"></div>
+            <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-6">
+
+              {/* Goal Setting (If none) */}
+              {!longTermGoal && (
+                <div className="bg-gradient-to-br from-indigo-50 to-white dark:from-indigo-900/10 dark:to-card-dark rounded-2xl p-4 border border-indigo-100 dark:border-indigo-900/20">
+                  <div className="flex items-center gap-2 mb-2 text-indigo-600 dark:text-indigo-400">
+                    <span className="material-symbols-outlined text-sm">flag</span>
+                    <span className="text-xs font-bold uppercase">Set a Focus Goal</span>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Reduce anxiety..."
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const val = e.currentTarget.value;
+                        if (val.trim()) useAIStore.getState().setLongTermGoal(val.trim());
+                      }
+                    }}
+                    className="w-full bg-white dark:bg-gray-800 text-sm p-2 rounded-lg border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
                 </div>
-              ) : prompts.length > 0 ? (
-                prompts.map((prompt, index) => (
-                  <div
-                    key={index}
-                    onClick={() => handlePromptClick(prompt)}
-                    className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
+              )}
+              {/* Goal Tracker Widget */}
+              {longTermGoal && goalStatus && (
+                <div className="flex flex-col gap-3">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Goal</p>
+                  <div className={`bg-white dark:bg-card-dark border rounded-2xl p-4 shadow-sm relative overflow-hidden group ${goalStatus.status === 'at_risk' ? 'border-red-200 dark:border-red-900/30' : goalStatus.status === 'needs_attention' ? 'border-amber-200 dark:border-amber-900/30' : 'border-emerald-200 dark:border-emerald-900/30'}`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-bold text-gray-800 dark:text-gray-200 truncate" title={longTermGoal}>{longTermGoal}</h4>
+                      <span className={`material-symbols-outlined text-lg ${goalStatus.status === 'at_risk' ? 'text-red-500' : goalStatus.status === 'needs_attention' ? 'text-amber-500' : 'text-emerald-500'}`}>
+                        {goalStatus.status === 'at_risk' ? 'warning' : goalStatus.status === 'needs_attention' ? 'priority_high' : 'check_circle'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 leading-relaxed">{goalStatus.insight}</p>
+                    <div className={`text-[10px] font-bold px-2 py-1 rounded-lg inline-block ${goalStatus.status === 'at_risk' ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                      Tip: {goalStatus.suggestion}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Real-time Sentiment Analysis */}
+              <div className="flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Current Vibe</p>
+                  {isAnalyzing && <span className="text-[10px] text-primary animate-pulse">Analyzing...</span>}
+                </div>
+                <div className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm relative overflow-hidden group">
+                  {/* Decorative gradient blur based on sentiment color */}
+                  <div className={`absolute top-0 right-0 -mr-4 -mt-4 w-24 h-24 opacity-10 rounded-full blur-2xl transition-all ${sentiment.color.replace('text-', 'bg-')}`}></div>
+
+                  <div className="flex items-center gap-3 mb-3 relative z-10">
+                    <div className={`size-10 rounded-full flex items-center justify-center ${sentiment.color.replace('text-', 'bg-').replace('500', '50')} ${sentiment.color}`}>
+                      <span className="material-symbols-outlined">
+                        {sentiment.score > 70 ? 'sentiment_very_satisfied' : sentiment.score > 40 ? 'sentiment_satisfied' : 'sentiment_dissatisfied'}
+                      </span>
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-gray-800 dark:text-gray-200">{sentiment.label}</p>
+                      <p className="text-xs text-gray-500">{sentiment.score}% Intensity</p>
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1 overflow-hidden">
+                    <div
+                      className={`h-1.5 rounded-full transition-all duration-1000 ${sentiment.color.replace('text-', 'bg-')}`}
+                      style={{ width: `${sentiment.score}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-gray-400 font-medium">
+                    <span>Low</span>
+                    <span>Moderate</span>
+                    <span>High</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Follow-up Prompts */}
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Deepen Your Thought</p>
+                  <button
+                    onClick={handleRefreshPrompts}
+                    disabled={isGenerating || isPromptsLoading}
+                    className="text-primary text-[10px] font-bold hover:underline disabled:opacity-50"
                   >
-                    <div className="flex gap-3">
-                      <div className={`mt-0.5 ${index === 0 ? 'text-accent' : 'text-blue-400'}`}>
-                        <span className="material-symbols-outlined text-lg">{index === 0 ? 'lightbulb' : 'water_drop'}</span>
-                      </div>
-                      <div className="flex-1">
-                        <MarkdownRenderer content={prompt} className="text-sm text-gray-700 dark:text-gray-200 mb-2" />
-                        <div className="flex items-center gap-1 text-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                          <span>Click to add</span>
-                          <span className="material-symbols-outlined text-sm">add</span>
+                    {isGenerating ? 'Thinking...' : 'Refresh'}
+                  </button>
+                </div>
+
+                {isPromptsLoading ? (
+                  <div className="space-y-3">
+                    <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+                    <div className="h-24 bg-gray-100 dark:bg-gray-800 rounded-2xl animate-pulse delay-75"></div>
+                  </div>
+                ) : prompts.length > 0 ? (
+                  prompts.map((prompt, index) => (
+                    <div
+                      key={index}
+                      onClick={() => handlePromptClick(prompt)}
+                      className="bg-white dark:bg-card-dark border border-gray-100 dark:border-gray-700 rounded-2xl p-4 shadow-sm hover:shadow-md hover:border-primary/30 transition-all cursor-pointer group"
+                    >
+                      <div className="flex gap-3">
+                        <div className={`mt-0.5 ${index === 0 ? 'text-accent' : 'text-blue-400'}`}>
+                          <span className="material-symbols-outlined text-lg">{index === 0 ? 'lightbulb' : 'water_drop'}</span>
+                        </div>
+                        <div className="flex-1">
+                          <MarkdownRenderer content={prompt} className="text-sm text-gray-700 dark:text-gray-200 mb-2" />
+                          <div className="flex items-center gap-1 text-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span>Click to add</span>
+                            <span className="material-symbols-outlined text-sm">add</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl text-gray-400">
+                    <p className="text-xs">No prompts available...</p>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-6 border-2 border-dashed border-gray-100 dark:border-gray-800 rounded-2xl text-gray-400">
-                  <p className="text-xs">No prompts available...</p>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Stats/Widgets */}
-            <div className="flex flex-col gap-3 mt-auto">
-              {writingStreak > 0 ? (
-                <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
-                  <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wide">Writing Streak</p>
-                  <div className="flex items-end justify-between">
-                    <div>
-                      <span className="text-3xl font-bold text-gray-800 dark:text-gray-100 font-display">{writingStreak}</span>
-                      <span className="text-sm text-gray-500 font-medium ml-1">days</span>
-                    </div>
-                    <div className="flex gap-1 mb-1">
-                      {[...Array(5)].map((_, i) => (
-                        <div key={i} className={`w-1.5 rounded-full ${i < Math.min(writingStreak, 5) ? 'bg-primary h-4' : 'bg-primary/20 h-2'}`}></div>
-                      ))}
+              {/* Stats/Widgets */}
+              <div className="flex flex-col gap-3 mt-auto">
+                {writingStreak > 0 ? (
+                  <div className="bg-primary/5 rounded-2xl p-4 border border-primary/10">
+                    <p className="text-xs font-bold text-primary mb-2 uppercase tracking-wide">Writing Streak</p>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <span className="text-3xl font-bold text-gray-800 dark:text-gray-100 font-display">{writingStreak}</span>
+                        <span className="text-sm text-gray-500 font-medium ml-1">days</span>
+                      </div>
+                      <div className="flex gap-1 mb-1">
+                        {[...Array(5)].map((_, i) => (
+                          <div key={i} className={`w-1.5 rounded-full ${i < Math.min(writingStreak, 5) ? 'bg-primary h-4' : 'bg-primary/20 h-2'}`}></div>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-dashed border-gray-200 dark:border-gray-700 text-center">
-                  <span className="material-symbols-outlined text-gray-400 mb-1">history_edu</span>
-                  <p className="text-xs font-bold text-gray-500">Start your streak today!</p>
-                </div>
-              )}
+                ) : (
+                  <div className="bg-gray-50 dark:bg-gray-800/50 rounded-2xl p-4 border border-dashed border-gray-200 dark:border-gray-700 text-center">
+                    <span className="material-symbols-outlined text-gray-400 mb-1">history_edu</span>
+                    <p className="text-xs font-bold text-gray-500">Start your streak today!</p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+        </>
       )}
     </div>
   );

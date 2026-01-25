@@ -245,15 +245,15 @@ export const YearReport: React.FC = () => {
 
       <div className="flex flex-col items-center justify-center pt-8 pb-12 gap-6">
         <p className="text-gray-500 font-medium">Ready to start your journey for 2024?</p>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <button
             onClick={() => setShowExportDialog(true)}
-            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30"
+            className="flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-lg shadow-primary/30"
           >
             <span className="material-symbols-outlined">download</span>
             Export Annual Report
           </button>
-          <button className="flex items-center gap-2 bg-white dark:bg-card-dark border border-[#CCAB48] text-[#CCAB48] hover:bg-[#CCAB48] hover:text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-glow">
+          <button className="flex items-center justify-center gap-2 bg-white dark:bg-card-dark border border-[#CCAB48] text-[#CCAB48] hover:bg-[#CCAB48] hover:text-white px-8 py-4 rounded-2xl font-bold transition-all shadow-glow">
             <span className="material-symbols-outlined">share</span>
             Share Reflection
           </button>
