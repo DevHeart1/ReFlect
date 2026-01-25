@@ -52,7 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
 
         <div className={`flex flex-col h-full ${isCollapsed ? 'px-3 py-6' : 'p-6'}`}>
           {/* Logo */}
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} mb-10 transition-all`}>
+          {/* Logo */}
+          <NavLink to="/" className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} mb-10 transition-all hover:opacity-80`}>
             <div className="bg-primary/10 dark:bg-white/10 p-2 rounded-lg text-primary dark:text-white shrink-0">
               <span className="material-symbols-outlined text-3xl">spa</span>
             </div>
@@ -62,7 +63,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">Mindfulness AI</p>
               </div>
             )}
-          </div>
+          </NavLink>
 
           {/* Navigation */}
           <nav className="flex-1 flex flex-col gap-2">
