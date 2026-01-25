@@ -1,4 +1,5 @@
 import { UserProfile, DEFAULT_PROFILE } from '../utils/storage';
+import { db } from '../utils/db';
 import { jwtDecode } from 'jwt-decode';
 
 const USERS_KEY = 'reflect_users';
@@ -61,8 +62,13 @@ export const authService = {
             joinedDate: new Date().toISOString()
         };
 
+        const { id, passwordHash: _, ...profileData } = newUser;
+
         users.push(newUser);
         localStorage.setItem(USERS_KEY, JSON.stringify(users));
+
+        // Sync to Dexie
+        await db.profile.put({ ...profileData, id: 'current' });
 
         // Auto login
         localStorage.setItem(SESSION_KEY, newUser.id);
@@ -81,6 +87,10 @@ export const authService = {
         if (user.passwordHash !== passwordHash) {
             throw new Error('Invalid credentials');
         }
+
+        const { id, passwordHash: _, ...profileData } = user;
+        // Sync to Dexie
+        await db.profile.put({ ...profileData, id: 'current' });
 
         localStorage.setItem(SESSION_KEY, user.id);
         return user;
@@ -118,6 +128,11 @@ export const authService = {
                     localStorage.setItem(USERS_KEY, JSON.stringify(users));
                 }
             }
+
+            // Sync to Dexie
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id, passwordHash, ...profileData } = user;
+            await db.profile.put({ ...profileData, id: 'current' });
 
             localStorage.setItem(SESSION_KEY, user.id);
             return user;

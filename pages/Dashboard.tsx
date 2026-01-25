@@ -4,7 +4,9 @@ import { MoodChart } from '../components/MoodChart';
 import { RecentEntries } from '../components/RecentEntries';
 import { JournalEntry } from '../types';
 import { generateDailyQuote, generateQuickPrompts, DailyQuote, QuickPrompt } from '../services/geminiService';
-import { getUserProfile } from '../utils/storage';
+import { db } from '../utils/db';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { DEFAULT_PROFILE } from '../utils/storage';
 
 interface DashboardProps {
     entries: JournalEntry[];
@@ -14,6 +16,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
     const navigate = useNavigate();
     const [quote, setQuote] = useState<DailyQuote | null>(null);
     const [quickPrompts, setQuickPrompts] = useState<QuickPrompt[] | null>(null);
+
+    // Use live query for real-time updates
+    const profile = useLiveQuery(() => db.profile.get('current')) || DEFAULT_PROFILE;
 
     useEffect(() => {
         const fetchAIContent = async () => {
@@ -32,7 +37,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
             <section className="flex flex-col md:flex-row md:items-end justify-between gap-6 animate-fade-in-up">
                 <div className="flex flex-col gap-1 max-w-2xl">
                     <h2 className="text-4xl font-black tracking-tight text-[#131516] dark:text-white leading-tight">
-                        {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'}, {getUserProfile().name}
+                        {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 18 ? 'Good Afternoon' : 'Good Evening'}, {profile.name}
                     </h2>
                     <p className="text-gray-500 dark:text-gray-400 font-medium">Here's your daily overview.</p>
                 </div>

@@ -116,10 +116,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
 };
 
 export const DEFAULT_PROFILE: UserProfile = {
-    name: 'Alex Morgan',
-    email: 'alex.morgan@example.com',
-    avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBTl5DKtYfek9G5GdtwQpurwPvAdBPXO6LSY36hAsHY0m7xTNZrUd0e620Hkl8NSFQBlbQXFQRlP3Of2DmydzlnuUxsfsZerVHfrl5IreHcp5HRi89WnvgEG2LZ-e9AZFoBllf4b8LX5RASB6P-yvuPhNU6Tfkv7UDgjmQMz2Oeom77Rg30sbW8AOUXh6IbJ5WtkcahJRsPGvRNCIAGZOkqntuIIKwKyNC-mTJA-PEumaay9IYs7LbRhAowE5u6hBZ8XuTDiyKWYnVg',
-    isPro: true
+    name: 'Guest User',
+    email: 'guest@example.com',
+    avatarUrl: 'https://ui-avatars.com/api/?name=Guest+User&background=random',
+    isPro: false
 };
 
 export const getAppSettings = (): AppSettings => {
