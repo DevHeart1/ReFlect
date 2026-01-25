@@ -87,28 +87,26 @@ export const SignIn: React.FC<SignInProps> = ({ onSignIn, onSignUp }) => {
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex justify-center">
-                <GoogleLogin
-                  onSuccess={async (credentialResponse: CredentialResponse) => {
-                    if (credentialResponse.credential) {
-                      try {
-                        await authService.loginWithGoogle(credentialResponse.credential);
-                        onSignIn();
-                      } catch (e) {
-                        setError('Google login failed');
-                      }
+            <div className="flex justify-center w-full">
+              <GoogleLogin
+                onSuccess={async (credentialResponse: CredentialResponse) => {
+                  if (credentialResponse.credential) {
+                    try {
+                      await authService.loginWithGoogle(credentialResponse.credential);
+                      onSignIn();
+                    } catch (e) {
+                      setError('Google login failed');
                     }
-                  }}
-                  onError={() => {
-                    setError('Google login failed');
-                  }}
-                  useOneTap
-                  theme="filled_blue"
-                  shape="pill"
-                  text="signin_with"
-                />
-              </div>
+                  }
+                }}
+                onError={() => {
+                  setError('Google login failed');
+                }}
+                useOneTap
+                theme="filled_blue"
+                shape="pill"
+                text="signin_with"
+              />
             </div>
 
             <div className="relative py-4">
