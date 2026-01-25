@@ -78,11 +78,33 @@ export const authService = {
         // Clear legacy session markers just in case
         localStorage.removeItem('reflect_session');
 
-        // Check if user was created in the last 10 seconds (new signup)
-        const createdAt = new Date(data.user.created_at);
-        const now = new Date();
-        const timeDiff = (now.getTime() - createdAt.getTime()) / 1000; // seconds
-        const isNewUser = timeDiff < 10;
+        // Check if user has a profile in the database
+        // If no profile exists, this is a new user who needs onboarding
+        let isNewUser = false;
+        try {
+            const { data: profileData } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('id', data.user.id)
+                .single();
+
+            // If no profile exists, it's a new user
+            isNewUser = !profileData;
+
+            // Create profile for new users
+            if (isNewUser) {
+                await supabase.from('profiles').insert({
+                    id: data.user.id,
+                    email: data.user.email,
+                    name: data.user.user_metadata.name || 'User',
+                    avatar_url: data.user.user_metadata.avatar_url || '',
+                    is_pro: false
+                });
+            }
+        } catch (e) {
+            // If profile doesn't exist, treat as new user
+            isNewUser = true;
+        }
 
         return {
             user: mapSupabaseUser(data.user),
