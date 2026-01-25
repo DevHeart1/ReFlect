@@ -1,21 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MoodChart } from '../components/MoodChart';
 import { RecentEntries } from '../components/RecentEntries';
 import { JournalEntry } from '../types';
 import { generateDailyQuote, generateQuickPrompts, DailyQuote, QuickPrompt } from '../services/geminiService';
-import { DEFAULT_PROFILE } from '../utils/storage';
+import { DEFAULT_PROFILE, MoodCheckin } from '../utils/storage';
 import { authService } from '../services/authService';
 
 interface DashboardProps {
     entries: JournalEntry[];
+    moods: MoodCheckin[];
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ entries, moods }) => {
     const navigate = useNavigate();
     const [quote, setQuote] = useState<DailyQuote | null>(null);
     const [quickPrompts, setQuickPrompts] = useState<QuickPrompt[] | null>(null);
     const [profile, setProfile] = useState(DEFAULT_PROFILE);
+
+    // Calculate Mood Metrics
+    const moodMetrics = useMemo(() => {
+        if (!moods || moods.length === 0) {
+            return {
+                currentState: 'Neutral',
+                trend: 0,
+                trendLabel: 'Steady'
+            };
+        }
+
+        // Sort moods by date descending
+        const sortedMoods = [...moods].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const currentState = sortedMoods[0].mood;
+
+        // Calculate Trend (Avg of last 3 days vs previous 3 days)
+        // Group by day first to avoid weighting one day with many entries too heavily?
+        // Let's just do simple average of values for now for simplicity, or day-based.
+        // Let's do simple average of last 3 entries vs previous 3 entries if available.
+        // Better: Avg of last 3 days vs previous 3 days.
+
+        // Helper to get day averages
+        const getDayAvgs = () => {
+             const dayMap = new Map<string, number[]>();
+             sortedMoods.forEach(m => {
+                 const d = new Date(m.date).toDateString();
+                 if (!dayMap.has(d)) dayMap.set(d, []);
+                 dayMap.get(d)?.push(m.moodValue);
+             });
+
+             const days = Array.from(dayMap.entries()).map(([date, values]) => ({
+                 date: new Date(date),
+                 avg: values.reduce((a, b) => a + b, 0) / values.length
+             })).sort((a, b) => b.date.getTime() - a.date.getTime()); // Descending
+             return days;
+        };
+
+        const dayAvgs = getDayAvgs();
+
+        let trend = 0;
+        if (dayAvgs.length >= 2) {
+            // Compare last 3 days (or fewer) to previous 3
+            const currentPeriod = dayAvgs.slice(0, 3);
+            const prevPeriod = dayAvgs.slice(3, 6); // next 3
+
+            if (currentPeriod.length > 0 && prevPeriod.length > 0) {
+                const curAvg = currentPeriod.reduce((a, b) => a + b.avg, 0) / currentPeriod.length;
+                const prevAvg = prevPeriod.reduce((a, b) => a + b.avg, 0) / prevPeriod.length;
+
+                // Diff percentage based on max value 5
+                trend = Math.round(((curAvg - prevAvg) / 5) * 100);
+            }
+        }
+
+        return {
+            currentState,
+            trend,
+            trendLabel: trend > 0 ? 'Improving' : trend < 0 ? 'Declining' : 'Steady'
+        };
+
+    }, [moods]);
+
 
     // Fetch user profile from Supabase
     useEffect(() => {
@@ -56,6 +119,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
         };
         fetchAIContent();
     }, []);
+
     return (
         <div className="p-6 lg:p-10 max-w-7xl mx-auto w-full space-y-8">
             {/* 1. Header Section (Greeting) */}
@@ -207,19 +271,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries }) => {
                                 <h3 className="text-base font-semibold text-gray-900 dark:text-white">Weekly Flow</h3>
                                 <p className="text-xs text-gray-500 mt-1">Emotional trend line</p>
                             </div>
-                            <div className="bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-                                <span className="material-symbols-outlined text-[14px]">trending_up</span>
-                                +10%
+                            {/* Dynamic Trend Badge */}
+                            <div className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 ${
+                                moodMetrics.trend > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                                moodMetrics.trend < 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
+                                'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                            }`}>
+                                <span className="material-symbols-outlined text-[14px]">
+                                    {moodMetrics.trend > 0 ? 'trending_up' : moodMetrics.trend < 0 ? 'trending_down' : 'trending_flat'}
+                                </span>
+                                {moodMetrics.trend > 0 ? '+' : ''}{moodMetrics.trend}%
                             </div>
                         </div>
                         <div className="flex-1 flex flex-col justify-end gap-2">
                             <div className="mb-2">
-                                <span className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">Calm</span>
+                                <span className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">{moodMetrics.currentState}</span>
                                 <span className="text-sm text-gray-400 ml-2">Current State</span>
                             </div>
                             {/* Chart Area */}
                             <div className="relative h-40 w-full mt-4 -ml-2 shrink-0">
-                                <MoodChart />
+                                <MoodChart moods={moods} />
                             </div>
                             <div className="flex justify-between text-xs text-gray-400 font-medium mt-2 pt-2 border-t border-gray-100 dark:border-gray-800">
                                 <span>Mon</span>
