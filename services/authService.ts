@@ -141,16 +141,22 @@ export const authService = {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) throw new Error('No user logged in');
 
-        // Delete all user data from tables (RLS should handle this automatically via cascade)
-        // But we can explicitly delete to be sure
+        // Delete all user data from tables first
         await supabase.from('journal_entries').delete().eq('user_id', user.id);
         await supabase.from('mood_checkins').delete().eq('user_id', user.id);
         await supabase.from('user_settings').delete().eq('user_id', user.id);
         await supabase.from('profiles').delete().eq('id', user.id);
 
-        // Delete the user account from Supabase Auth
-        // Note: This requires RLS policies to allow deletion or admin API
-        // For now, we'll sign out and the user can request deletion via support
+        // Call the database function to delete the user from auth.users
+        // This requires the SQL function to be created in Supabase first
+        const { error: rpcError } = await supabase.rpc('delete_user');
+
+        if (rpcError) {
+            console.error('Failed to delete auth user:', rpcError);
+            // Even if RPC fails, we've deleted their data
+        }
+
+        // Sign out
         await supabase.auth.signOut();
 
         // Clear all local data
