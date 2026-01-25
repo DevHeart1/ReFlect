@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
 import { Dialog } from '../components/Dialog';
-import { getUserProfile, saveUserProfile, UserProfile, DEFAULT_PROFILE } from '../utils/storage';
+import { UserProfile, DEFAULT_PROFILE } from '../utils/storage';
+import { authService } from '../services/authService';
 
 export const ProfileSettingsPage: React.FC = () => {
     const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
@@ -15,17 +16,19 @@ export const ProfileSettingsPage: React.FC = () => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const data = getUserProfile();
-        setProfile(data);
-        setName(data.name);
-        setEmail(data.email);
-        setAvatarUrl(data.avatarUrl);
+        const user = authService.getCurrentUser();
+        if (user) {
+            setProfile(user);
+            setName(user.name);
+            setEmail(user.email);
+            setAvatarUrl(user.avatarUrl);
+        }
     }, []);
 
     const handleSave = () => {
         const updated = { ...profile, name, email, avatarUrl };
         setProfile(updated);
-        saveUserProfile(updated);
+        authService.updateProfile({ name, email, avatarUrl });
         setIsEditing(false);
     };
 
@@ -137,12 +140,6 @@ export const ProfileSettingsPage: React.FC = () => {
                                         <p className="text-sm text-gray-500 dark:text-gray-400">{profile.email}</p>
                                     )}
                                 </div>
-                                <button
-                                    onClick={() => setIsEditing(true)}
-                                    className="text-sm font-bold text-primary hover:underline"
-                                >
-                                    Change Email
-                                </button>
                             </div>
                             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="space-y-1">
@@ -155,6 +152,22 @@ export const ProfileSettingsPage: React.FC = () => {
                                     className="text-sm font-bold text-primary hover:underline"
                                 >
                                     Reset Password
+                                </button>
+                            </div>
+                            <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-red-600 dark:text-red-400">Sign Out</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Sign out of your account on this device.</p>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        authService.logout();
+                                        window.location.reload();
+                                    }}
+                                    className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-100 dark:border-red-900/30"
+                                >
+                                    Log Out
                                 </button>
                             </div>
                         </div>

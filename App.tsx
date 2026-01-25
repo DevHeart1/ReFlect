@@ -9,6 +9,7 @@ import { JournalEntry, Template } from './types';
 import { getAppSettings, getUserProfile } from './utils/storage';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, initDatabase } from './utils/db';
+import { authService } from './services/authService';
 import {
   Dashboard,
   MoodTrackerPage,
@@ -157,7 +158,7 @@ const INITIAL_TEMPLATES: Template[] = [
 ];
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(!!authService.getCurrentSession());
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -225,7 +226,7 @@ const App: React.FC = () => {
   const handleSaveEntry = async (title: string, content: string) => {
     const newEntry: JournalEntry = {
       id: Date.now().toString(),
-      userId: getUserProfile().email, // Link to current user
+      userId: authService.getCurrentUser()?.id || 'anonymous', // Link to current user
       title: title,
       excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...', // Create plain text excerpt from HTML
       content: content,
