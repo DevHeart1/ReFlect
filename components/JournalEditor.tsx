@@ -81,6 +81,22 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
     analyze();
   }, [debouncedContent]);
 
+  // Safe color mapping for mood bar
+  const getMoodColor = (mood: string) => {
+    switch (mood) {
+      case 'Radiant': return 'bg-amber-400';
+      case 'Content': return 'bg-emerald-400';
+      case 'Neutral': return 'bg-gray-400';
+      case 'Low': return 'bg-blue-400';
+      case 'Distressed': return 'bg-rose-400';
+      case 'Anxious': return 'bg-purple-400';
+      case 'Angry': return 'bg-red-500';
+      case 'Excited': return 'bg-yellow-400';
+      case 'Grateful': return 'bg-pink-400';
+      default: return 'bg-primary';
+    }
+  };
+
   const editorRef = useRef<any>(null);
 
   // Fetch recent moods for goal analysis
@@ -473,7 +489,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
 
                   <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1 overflow-hidden">
                     <div
-                      className={`h-1.5 rounded-full transition-all duration-1000 ${sentiment.color.replace('text-', 'bg-')}`}
+                      className={`h-1.5 rounded-full transition-all duration-1000 ${getMoodColor(sentiment.label)}`}
                       style={{ width: `${Math.max(5, sentiment.score)}%` }} // Ensure min width of 5% for visibility
                     ></div>
                   </div>
