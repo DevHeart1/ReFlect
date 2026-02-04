@@ -128,11 +128,29 @@ export const authService = {
     },
 
     updateProfile: async (updatedData: Partial<UserProfile>) => {
-        const { error } = await supabase.auth.updateUser({
-            data: updatedData
-        });
+        const updates: any = {
+            data: {}
+        };
+
+        if (updatedData.name) updates.data.name = updatedData.name;
+        if (updatedData.avatarUrl) updates.data.avatar_url = updatedData.avatarUrl;
+
+        // If email is being updated, it needs to be handled separately in Supabase usually, 
+        // but for now let's focus on metadata
+        // if (updatedData.email) updates.email = updatedData.email;
+
+        const { error, data } = await supabase.auth.updateUser(updates);
 
         if (error) throw error;
+
+        // Also update the 'profiles' table which we use for querying other users potentially
+        if (data.user) {
+            await supabase.from('profiles').update({
+                name: updatedData.name || data.user.user_metadata.name,
+                avatar_url: updatedData.avatarUrl || data.user.user_metadata.avatar_url
+            }).eq('id', data.user.id);
+        }
+
         window.dispatchEvent(new Event('profile-updated'));
     },
 

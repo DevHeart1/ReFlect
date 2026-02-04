@@ -31,10 +31,16 @@ export const ProfileSettingsPage: React.FC = () => {
         return () => window.removeEventListener('profile-updated', loadUser);
     }, []);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         const updated = { ...profile, name, email, avatarUrl };
         setProfile(updated);
-        authService.updateProfile(updated);
+
+        // Persist to Supabase Auth Metadata
+        await authService.updateProfile({
+            name,
+            avatarUrl: avatarUrl // Ensure this is passed
+        });
+
         // Force update local storage directly as fallback/ensure immediate effect
         import('../utils/storage').then(({ saveUserProfile }) => {
             saveUserProfile(updated);
