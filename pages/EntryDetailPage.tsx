@@ -150,7 +150,8 @@ export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDel
                         </div>
                     ) : (
                         <div
-                            className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
+                            className={`prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed ${!/<[a-z][\s\S]*>/i.test(entry.content || entry.excerpt) ? 'whitespace-pre-wrap' : ''
+                                }`}
                             dangerouslySetInnerHTML={{ __html: entry.content || entry.excerpt }}
                         />
                     )}
