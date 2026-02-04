@@ -442,7 +442,7 @@ const App: React.FC = () => {
               </Route>
 
               <Route path="/year-report" element={<YearReportPage moods={moods} />} />
-              <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} onEdit={handleEditEntry} />} />
+              <Route path="/entry/:id" element={<EntryDetailPage entries={entries} onDelete={handleDeleteEntry} />} />
               <Route path="/entries" element={<AllEntriesPage entries={entries} />} />
               <Route path="/notifications" element={<NotificationsPage />} />
 

@@ -1,14 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { JournalEntry } from '../types';
 
 interface EntryDetailPageProps {
     entries: JournalEntry[];
     onDelete: (id: string) => void;
-    onEdit: (id: string, title: string, content: string) => void;
 }
 
-export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDelete, onEdit }) => {
+export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDelete }) => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
 
