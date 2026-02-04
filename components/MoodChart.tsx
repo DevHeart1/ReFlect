@@ -3,7 +3,7 @@ import { AreaChart, Area, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { MoodCheckin } from '../utils/storage';
 
 interface MoodChartProps {
-    moods: MoodCheckin[];
+  moods: MoodCheckin[];
 }
 
 export const MoodChart: React.FC<MoodChartProps> = ({ moods }) => {
@@ -38,7 +38,7 @@ export const MoodChart: React.FC<MoodChartProps> = ({ moods }) => {
   if (!data || data.length === 0) return <div className="h-[160px] w-full bg-gray-50 dark:bg-gray-800/20 rounded-xl animate-pulse"></div>;
 
   return (
-    <div style={{ width: '100%', height: 160 }}>
+    <div className="w-full h-[160px]">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
           <defs>
