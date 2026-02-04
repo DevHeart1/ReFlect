@@ -54,7 +54,7 @@ export const YearReport: React.FC<YearReportProps> = ({ moods }) => {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-[400px]">
         {/* AI Synthesis */}
         <section className="lg:col-span-8 bg-white dark:bg-card-dark rounded-3xl p-8 border border-gray-100 dark:border-gray-800 shadow-soft relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-5">

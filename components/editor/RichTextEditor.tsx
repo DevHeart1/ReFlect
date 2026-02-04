@@ -236,7 +236,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
         extensions: [
             StarterKit,
             Image,
-            Underline,
+            // Underline, // Removed to fix duplicate extension warning
             TextStyle,
             Color,
             FontFamily,

@@ -301,7 +301,11 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
               <RichTextEditor
                 content={content}
                 onUpdate={setContent}
-                onEditorReady={(editor) => editorRef.current = editor}
+                onEditorReady={(editor) => {
+                  if (editorRef.current !== editor) {
+                    editorRef.current = editor;
+                  }
+                }}
               />
             </div>
           </div>
@@ -470,7 +474,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
                   <div className="w-full bg-gray-100 dark:bg-gray-700 rounded-full h-1.5 mb-1 overflow-hidden">
                     <div
                       className={`h-1.5 rounded-full transition-all duration-1000 ${sentiment.color.replace('text-', 'bg-')}`}
-                      style={{ width: `${sentiment.score}%` }}
+                      style={{ width: `${Math.max(5, sentiment.score)}%` }} // Ensure min width of 5% for visibility
                     ></div>
                   </div>
                   <div className="flex justify-between text-[10px] text-gray-400 font-medium">
