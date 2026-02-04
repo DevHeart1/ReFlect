@@ -22,7 +22,7 @@ export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDel
     React.useEffect(() => {
         if (entry) {
             setEditedTitle(entry.title);
-            setEditedContent(entry.excerpt); // Note: using excerpt as full content for now
+            setEditedContent(entry.content || entry.excerpt);
         }
     }, [entry]);
 
@@ -151,7 +151,7 @@ export const EntryDetailPage: React.FC<EntryDetailPageProps> = ({ entries, onDel
                     ) : (
                         <div
                             className="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed"
-                            dangerouslySetInnerHTML={{ __html: entry.excerpt }}
+                            dangerouslySetInnerHTML={{ __html: entry.content || entry.excerpt }}
                         />
                     )}
                 </div>
