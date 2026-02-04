@@ -32,20 +32,25 @@ export const ProfileSettingsPage: React.FC = () => {
     }, []);
 
     const handleSave = async () => {
-        const updated = { ...profile, name, email, avatarUrl };
-        setProfile(updated);
+        try {
+            const updated = { ...profile, name, email, avatarUrl };
+            setProfile(updated);
 
-        // Persist to Supabase Auth Metadata
-        await authService.updateProfile({
-            name,
-            avatarUrl: avatarUrl // Ensure this is passed
-        });
+            // Persist to Supabase Auth Metadata
+            await authService.updateProfile({
+                name,
+                avatarUrl // Use the state variable directly
+            });
 
-        // Force update local storage directly as fallback/ensure immediate effect
-        import('../utils/storage').then(({ saveUserProfile }) => {
+            // Force update local storage directly
+            const { saveUserProfile } = await import('../utils/storage');
             saveUserProfile(updated);
-        });
-        setIsEditing(false);
+        } catch (error) {
+            console.error("Failed to save profile:", error);
+            // Optionally show an error toast here
+        } finally {
+            setIsEditing(false);
+        }
     };
 
     const handleCancel = () => {
