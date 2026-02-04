@@ -15,6 +15,20 @@ interface JournalEditorProps {
   onSave: (title: string, content: string, id?: string) => void;
 }
 
+// Custom hook to minimize API calls
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
+
 export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) => {
   const [searchParams] = useSearchParams();
   const location = useLocation();
@@ -37,6 +51,33 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const [sentiment, setSentiment] = useState({ label: 'Neutral', score: 50, color: 'text-gray-500' });
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPromptsLoading, setIsPromptsLoading] = useState(true);
+
+  // Debounce content for analysis
+  const debouncedContent = useDebounce(content, 2000); // Wait 2 seconds of inactivity
+
+  // Real-time Sentiment Analysis
+  useEffect(() => {
+    const analyze = async () => {
+      const plainText = debouncedContent.replace(/<[^>]+>/g, '').trim();
+      if (!plainText || plainText.length < 20) return; // Minimum length
+
+      setIsAnalyzing(true);
+      try {
+        const { extractMoodFromJournal } = await import('../services/geminiService');
+        const result = await extractMoodFromJournal(plainText);
+        setSentiment({
+          label: result.mood,
+          score: result.moodValue * 20, // Convert 1-5 to 0-100
+          color: result.color
+        });
+      } catch (e) {
+        console.error("Analysis failed", e);
+      } finally {
+        setIsAnalyzing(false);
+      }
+    };
+    analyze();
+  }, [debouncedContent]);
 
   const editorRef = useRef<any>(null);
 
