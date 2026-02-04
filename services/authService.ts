@@ -31,7 +31,19 @@ export const authService = {
     getCurrentUser: async (): Promise<User | null> => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return null;
-        return mapSupabaseUser(user);
+        const mappedUser = mapSupabaseUser(user);
+
+        // Sync with local storage for faster initial loads elsewhere
+        try {
+            const { saveUserProfile } = await import('../utils/storage');
+            // We pass mappedUser but cast or ensure it matches UserProfile. 
+            // User extends UserProfile so it's compatible.
+            saveUserProfile(mappedUser);
+        } catch (e) {
+            console.warn('Failed to sync user to local storage', e);
+        }
+
+        return mappedUser;
     },
 
     // --- Actions ---

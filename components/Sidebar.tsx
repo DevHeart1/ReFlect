@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { DEFAULT_PROFILE } from '../utils/storage';
+import { DEFAULT_PROFILE, getUserProfile } from '../utils/storage';
 import { authService } from '../services/authService';
 
 interface SidebarProps {
@@ -11,11 +11,25 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [profile, setProfile] = useState(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState(() => {
+    // Initialize from local storage if available for instant render
+    const local = getUserProfile();
+    return (local && local.email !== 'guest@example.com') ? local : DEFAULT_PROFILE;
+  });
 
   // Fetch user profile from Supabase
   useEffect(() => {
     const fetchProfile = async () => {
+      // 1. Try local storage first
+      try {
+        const { getUserProfile } = await import('../utils/storage');
+        const localProfile = getUserProfile();
+        if (localProfile && localProfile.email !== 'guest@example.com') {
+          setProfile(localProfile);
+        }
+      } catch (e) { /* ignore */ }
+
+      // 2. Then fresh fetch
       const user = await authService.getCurrentUser();
       if (user) {
         setProfile({

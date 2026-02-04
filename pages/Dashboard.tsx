@@ -4,7 +4,7 @@ import { MoodChart } from '../components/MoodChart';
 import { RecentEntries } from '../components/RecentEntries';
 import { JournalEntry } from '../types';
 import { generateDailyQuote, generateQuickPrompts, DailyQuote, QuickPrompt } from '../services/geminiService';
-import { DEFAULT_PROFILE, MoodCheckin } from '../utils/storage';
+import { DEFAULT_PROFILE, MoodCheckin, getUserProfile } from '../utils/storage';
 import { authService } from '../services/authService';
 
 interface DashboardProps {
@@ -16,7 +16,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries, moods }) => {
     const navigate = useNavigate();
     const [quote, setQuote] = useState<DailyQuote | null>(null);
     const [quickPrompts, setQuickPrompts] = useState<QuickPrompt[] | null>(null);
-    const [profile, setProfile] = useState(DEFAULT_PROFILE);
+    const [profile, setProfile] = useState(() => {
+        // Initialize from local storage if available for instant render
+        const { getUserProfile } = require('../utils/storage'); // Using require or we can import it at top if not there. 
+        // Wait, Dashboard has it imported? Let's check imports.
+        // Line 7 imports DEFAULT_PROFILE, MoodCheckin. Need to add getUserProfile.
+        const local = getUserProfile();
+        return (local && local.email !== 'guest@example.com') ? local : DEFAULT_PROFILE;
+    });
 
     // Calculate Mood Metrics
     const moodMetrics = useMemo(() => {
@@ -40,18 +47,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries, moods }) => {
 
         // Helper to get day averages
         const getDayAvgs = () => {
-             const dayMap = new Map<string, number[]>();
-             sortedMoods.forEach(m => {
-                 const d = new Date(m.date).toDateString();
-                 if (!dayMap.has(d)) dayMap.set(d, []);
-                 dayMap.get(d)?.push(m.moodValue);
-             });
+            const dayMap = new Map<string, number[]>();
+            sortedMoods.forEach(m => {
+                const d = new Date(m.date).toDateString();
+                if (!dayMap.has(d)) dayMap.set(d, []);
+                dayMap.get(d)?.push(m.moodValue);
+            });
 
-             const days = Array.from(dayMap.entries()).map(([date, values]) => ({
-                 date: new Date(date),
-                 avg: values.reduce((a, b) => a + b, 0) / values.length
-             })).sort((a, b) => b.date.getTime() - a.date.getTime()); // Descending
-             return days;
+            const days = Array.from(dayMap.entries()).map(([date, values]) => ({
+                date: new Date(date),
+                avg: values.reduce((a, b) => a + b, 0) / values.length
+            })).sort((a, b) => b.date.getTime() - a.date.getTime()); // Descending
+            return days;
         };
 
         const dayAvgs = getDayAvgs();
@@ -80,9 +87,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries, moods }) => {
     }, [moods]);
 
 
-    // Fetch user profile from Supabase
+    // Fetch user profile
     useEffect(() => {
         const fetchProfile = async () => {
+            // 1. Try local storage first for instant render
+            try {
+                const { getUserProfile } = await import('../utils/storage');
+                const localProfile = getUserProfile();
+                if (localProfile && localProfile.email !== 'guest@example.com') {
+                    setProfile(localProfile);
+                }
+            } catch (e) { /* ignore */ }
+
+            // 2. Then fetch fresh from Auth
             const user = await authService.getCurrentUser();
             if (user) {
                 setProfile({
@@ -272,11 +289,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries, moods }) => {
                                 <p className="text-xs text-gray-500 mt-1">Emotional trend line</p>
                             </div>
                             {/* Dynamic Trend Badge */}
-                            <div className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 ${
-                                moodMetrics.trend > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
+                            <div className={`px-2 py-1 rounded text-xs font-bold flex items-center gap-1 ${moodMetrics.trend > 0 ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' :
                                 moodMetrics.trend < 0 ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400' :
-                                'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                            }`}>
+                                    'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                                }`}>
                                 <span className="material-symbols-outlined text-[14px]">
                                     {moodMetrics.trend > 0 ? 'trending_up' : moodMetrics.trend < 0 ? 'trending_down' : 'trending_flat'}
                                 </span>
