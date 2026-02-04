@@ -12,7 +12,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface JournalEditorProps {
   onBack: () => void;
-  onSave: (title: string, content: string, id?: string) => void;
+  onSave: (title: string, content: string, id?: string, moodData?: any) => void;
 }
 
 // Custom hook to minimize API calls
@@ -49,6 +49,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
 
   const [prompts, setPrompts] = useState<string[]>([]);
   const [sentiment, setSentiment] = useState({ label: 'Neutral', score: 50, color: 'text-gray-500' });
+  const [moodAnalysis, setMoodAnalysis] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isPromptsLoading, setIsPromptsLoading] = useState(true);
 
@@ -65,6 +66,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
       try {
         const { extractMoodFromJournal } = await import('../services/geminiService');
         const result = await extractMoodFromJournal(plainText);
+        setMoodAnalysis(result);
         setSentiment({
           label: result.mood,
           score: result.moodValue * 20, // Convert 1-5 to 0-100
@@ -262,7 +264,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
             </button>
             <button
               onClick={() => {
-                onSave(title || 'Untitled Entry', content, entryId);
+                onSave(title || 'Untitled Entry', content, entryId, moodAnalysis);
                 if (isDeepReflectMode) {
                   const plainText = content.replace(/<[^>]+>/g, '');
                   addDailyContext(`[${new Date().toLocaleTimeString()}] ${title}: ${plainText}`);

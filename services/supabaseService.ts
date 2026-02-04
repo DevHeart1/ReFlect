@@ -119,6 +119,26 @@ export const supabaseService = {
         if (error) throw error;
     },
 
+    async updateMoodByDate(date: string, moodData: any) {
+        // Map to snake_case
+        const dbMood = {
+            mood_label: moodData.mood,
+            mood_score: moodData.moodValue,
+            secondary_emotions: moodData.secondaryEmotions,
+            factors: moodData.factors,
+            note: 'Updated from journal entry'
+        };
+
+        const { error } = await supabase
+            .from('mood_checkins')
+            .update(dbMood)
+            .eq('date', date);
+
+        if (error) {
+            console.error("Failed to update mood:", error);
+        }
+    },
+
     // --- Profile & Settings ---
     // Syncs handled via profiles table triggers or direct updates
     async getUserSettings(userId: string): Promise<AppSettings | null> {

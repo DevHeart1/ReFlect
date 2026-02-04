@@ -251,29 +251,32 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSaveEntry = async (title: string, content: string, id?: string) => {
+  const handleSaveEntry = async (title: string, content: string, id?: string, moodData?: any) => {
     if (id) {
-      await handleEditEntry(id, title, content);
+      await handleEditEntry(id, title, content, moodData);
       return;
     }
     // 1. Analyze Mood asynchronously
-    let moodData = {
-      mood: 'Neutral',
-      moodValue: 3,
-      factors: [] as string[],
-      secondaryEmotions: [] as string[],
-      color: 'text-gray-500'
-    };
+    let finalMoodData = moodData;
 
-    try {
-      // Import dynamically to avoid circular dependencies if any
-      const { extractMoodFromJournal } = await import('./services/geminiService');
-      const analysis = await extractMoodFromJournal(content);
-      moodData = analysis;
-    } catch (error) {
-      console.error("Auto-mood analysis failed:", error);
+    if (!finalMoodData) {
+      try {
+        const { extractMoodFromJournal } = await import('./services/geminiService');
+        const analysis = await extractMoodFromJournal(content);
+        finalMoodData = analysis;
+      } catch (error) {
+        console.error("Auto-mood analysis failed:", error);
+        finalMoodData = {
+          mood: 'Neutral',
+          moodValue: 3,
+          factors: [] as string[],
+          secondaryEmotions: [] as string[],
+          color: 'text-gray-500'
+        };
+      }
     }
 
+    // 2. Create Journal Entry
     // 2. Create Journal Entry
     const currentUser = await authService.getCurrentUser();
     const newEntry: JournalEntry = {
@@ -283,11 +286,11 @@ const App: React.FC = () => {
       excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
       content: content,
       date: new Date().toISOString(),
-      tags: ['Journal', ...moodData.secondaryEmotions],
+      tags: ['Journal', ...finalMoodData.secondaryEmotions],
       type: 'journal',
-      mood: moodData.mood,
+      mood: finalMoodData.mood,
       icon: 'spa',
-      colorClass: `bg-opacity-10 ${moodData.color.replace('text-', 'bg-')} ${moodData.color}`
+      colorClass: `bg-opacity-10 ${finalMoodData.color.replace('text-', 'bg-')} ${finalMoodData.color}`
     };
 
     try {
@@ -299,10 +302,10 @@ const App: React.FC = () => {
         id: crypto.randomUUID(),
         user_id: newEntry.userId, // Matches schema snake_case if I passed it raw, but let's check interface
         date: newEntry.date,
-        mood: moodData.mood,
-        moodValue: moodData.moodValue,
-        secondaryEmotions: moodData.secondaryEmotions,
-        factors: moodData.factors,
+        mood: finalMoodData.mood,
+        moodValue: finalMoodData.moodValue,
+        secondaryEmotions: finalMoodData.secondaryEmotions,
+        factors: finalMoodData.factors,
         note: 'Auto-generated from journal entry'
       } as any); // Type assertion for now, need to align interfaces
 
@@ -323,14 +326,33 @@ const App: React.FC = () => {
     }
   };
 
-  const handleEditEntry = async (id: string, title: string, content: string) => {
+  const handleEditEntry = async (id: string, title: string, content: string, moodData?: any) => {
     try {
       const { supabaseService } = await import('./services/supabaseService');
-      await supabaseService.updateEntry(id, {
+
+      // Prepare updates
+      const updates: any = {
         title,
         excerpt: content.replace(/<[^>]+>/g, '').substring(0, 100) + '...',
         content
-      });
+      };
+
+      if (moodData) {
+        updates.mood = moodData.mood;
+        updates.colorClass = `bg-opacity-10 ${moodData.color.replace('text-', 'bg-')} ${moodData.color}`;
+      }
+
+      await supabaseService.updateEntry(id, updates);
+
+      // Also update linked Mood Checkin if possible
+      if (moodData) {
+        // Find the entry first to get the date
+        const existingEntry = entries.find(e => e.id === id);
+        if (existingEntry) {
+          await supabaseService.updateMoodByDate(existingEntry.date, moodData);
+        }
+      }
+
       await fetchData();
     } catch (e) {
       console.error("Failed to update", e);
