@@ -17,7 +17,7 @@ const groq = groqApiKey ? new Groq({
   dangerouslyAllowBrowser: true
 }) : null;
 
-const MODEL_NAME = 'gemini-3-flash-preview'; // Using latest flash preview
+const MODEL_NAME = 'gemini-1.5-flash'; // Using stable flash model for better quotas
 const DEFAULT_CONFIG = {
   responseMimeType: 'text/plain',
 } as any;
