@@ -16,19 +16,29 @@ export const ProfileSettingsPage: React.FC = () => {
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        const user = authService.getCurrentUser();
-        if (user) {
-            setProfile(user);
-            setName(user.name);
-            setEmail(user.email);
-            setAvatarUrl(user.avatarUrl);
-        }
+        const loadUser = async () => {
+            const user = await authService.getCurrentUser();
+            if (user) {
+                setProfile(user);
+                setName(user.name);
+                setEmail(user.email);
+                setAvatarUrl(user.avatarUrl);
+            }
+        };
+        loadUser();
+
+        window.addEventListener('profile-updated', loadUser);
+        return () => window.removeEventListener('profile-updated', loadUser);
     }, []);
 
     const handleSave = () => {
         const updated = { ...profile, name, email, avatarUrl };
         setProfile(updated);
-        authService.updateProfile({ name, email, avatarUrl });
+        authService.updateProfile(updated);
+        // Force update local storage directly as fallback/ensure immediate effect
+        import('../utils/storage').then(({ saveUserProfile }) => {
+            saveUserProfile(updated);
+        });
         setIsEditing(false);
     };
 
