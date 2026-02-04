@@ -12,7 +12,7 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface JournalEditorProps {
   onBack: () => void;
-  onSave: (title: string, content: string) => void;
+  onSave: (title: string, content: string, id?: string) => void;
 }
 
 export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) => {
@@ -20,6 +20,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   const location = useLocation();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
+  const [entryId, setEntryId] = useState<string | undefined>(undefined);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
   const [isAiSidebarOpen, setIsAiSidebarOpen] = useState(false);
@@ -82,10 +83,15 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
   // ... (Keep existing template loading logic: lines 56-110) ...
   // Handle URL Prompts and Templates
   useEffect(() => {
+    const entry = location.state?.entry as any; // Using any to bypass strict type check if types aren't fully aligned yet in imports
     const template = location.state?.template as Template | undefined;
     const promptType = searchParams.get('prompt');
 
-    if (template) {
+    if (entry) {
+      setTitle(entry.title);
+      setContent(entry.content || entry.excerpt);
+      setEntryId(entry.id);
+    } else if (template) {
       setTitle(template.title);
       let initialContent = '';
 
@@ -126,8 +132,8 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
         setTitle('Daily Gratitude');
         setContent("<h2>Today I am grateful for:</h2><ol><li><p></p></li><li><p></p></li><li><p></p></li></ol>");
       }
-    } else {
-      // Default Title based on time of day
+    } else if (!entryId) {
+      // Default Title based on time of day (only if not editing)
       const hour = new Date().getHours();
       if (hour < 12) setTitle('Morning Reflection');
       else if (hour < 18) setTitle('Afternoon Thoughts');
@@ -215,7 +221,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
             </button>
             <button
               onClick={() => {
-                onSave(title || 'Untitled Entry', content);
+                onSave(title || 'Untitled Entry', content, entryId);
                 if (isDeepReflectMode) {
                   const plainText = content.replace(/<[^>]+>/g, '');
                   addDailyContext(`[${new Date().toLocaleTimeString()}] ${title}: ${plainText}`);
@@ -223,7 +229,7 @@ export const JournalEditor: React.FC<JournalEditorProps> = ({ onBack, onSave }) 
               }}
               className={`flex items-center justify-center gap-2 h-9 px-6 rounded-lg text-white text-sm font-bold shadow-lg transition-colors ${isDeepReflectMode ? 'bg-indigo-600 shadow-indigo-500/20 hover:bg-indigo-700' : 'bg-primary shadow-primary/20 hover:bg-primary/90'}`}
             >
-              <span>{isDeepReflectMode ? 'Save to Context' : 'Save Entry'}</span>
+              <span>{isDeepReflectMode ? 'Save to Context' : (entryId ? 'Update Entry' : 'Save Entry')}</span>
             </button>
           </div>
         </header>

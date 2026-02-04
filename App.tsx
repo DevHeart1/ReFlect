@@ -251,7 +251,11 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSaveEntry = async (title: string, content: string) => {
+  const handleSaveEntry = async (title: string, content: string, id?: string) => {
+    if (id) {
+      await handleEditEntry(id, title, content);
+      return;
+    }
     // 1. Analyze Mood asynchronously
     let moodData = {
       mood: 'Neutral',
