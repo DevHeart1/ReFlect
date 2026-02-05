@@ -10,14 +10,6 @@
             "source": "/(.*)",
             "headers": [
                 {
-                    "key": "Cross-Origin-Opener-Policy",
-                    "value": "same-origin-allow-popups"
-                },
-                {
-                    "key": "Cross-Origin-Embedder-Policy",
-                    "value": "unsafe-none"
-                },
-                {
                     "key": "X-Frame-Options",
                     "value": "SAMEORIGIN"
                 },
@@ -28,10 +20,6 @@
                 {
                     "key": "Referrer-Policy",
                     "value": "strict-origin-when-cross-origin"
-                },
-                {
-                    "key": "Permissions-Policy",
-                    "value": "geolocation=(), microphone=(), camera=()"
                 }
             ]
         }

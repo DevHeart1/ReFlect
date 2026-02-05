@@ -11,9 +11,9 @@ if (!rootElement) {
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
-  <React.StrictMode>
-    <GoogleOAuthProvider clientId="528479351223-t5i515j80h3ruroioj3noma57q8fmeig.apps.googleusercontent.com">
-      <App />
-    </GoogleOAuthProvider>
-  </React.StrictMode>
+  // StrictMode temporarily disabled to prevent Supabase auth double-execution
+  // See: https://react.dev/reference/react/StrictMode#fixing-bugs-found-by-re-running-effects-in-development
+  <GoogleOAuthProvider clientId="528479351223-t5i515j80h3ruroioj3noma57q8fmeig.apps.googleusercontent.com">
+    <App />
+  </GoogleOAuthProvider>
 );
