@@ -18,9 +18,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ entries, moods }) => {
     const [quickPrompts, setQuickPrompts] = useState<QuickPrompt[] | null>(null);
     const [profile, setProfile] = useState(() => {
         // Initialize from local storage if available for instant render
-        const { getUserProfile } = require('../utils/storage'); // Using require or we can import it at top if not there. 
-        // Wait, Dashboard has it imported? Let's check imports.
-        // Line 7 imports DEFAULT_PROFILE, MoodCheckin. Need to add getUserProfile.
         const local = getUserProfile();
         return (local && local.email !== 'guest@example.com') ? local : DEFAULT_PROFILE;
     });
