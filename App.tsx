@@ -181,13 +181,10 @@ const App: React.FC = () => {
       }
 
       try {
-        // Check auth
-        const session = await authService.getCurrentSession().catch(e => {
-          console.error("Session check failed", e);
-          return null;
-        });
+        // Check auth - use getCurrentUser to validate session
+        const user = await authService.getCurrentUser();
 
-        const isAuth = !!session;
+        const isAuth = !!user;
         setIsAuthenticated(isAuth);
         setIsAuthLoading(false);
 
@@ -202,10 +199,15 @@ const App: React.FC = () => {
 
           // Fetch Data
           await fetchData();
+        } else {
+          // No valid session - clear any stale data
+          const { supabase } = await import('./utils/supabaseClient');
+          await supabase.auth.signOut();
         }
       } catch (e) {
         console.error("App initialization failed", e);
-        setIsAuthLoading(false); // Ensure we don't get stuck
+        setIsAuthenticated(false);
+        setIsAuthLoading(false);
       }
     };
     init();

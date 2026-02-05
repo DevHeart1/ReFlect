@@ -123,19 +123,42 @@ export const DEFAULT_PROFILE: UserProfile = {
 };
 
 export const getAppSettings = (): AppSettings => {
-    // Deprecated: Settings should be loaded from Supabase/Context
-    // Returning defaults to ensure fallbacks
+    // Fallback: Try localStorage first, then defaults
+    // This ensures compatibility during transition to Supabase
+    try {
+        const data = localStorage.getItem(SETTINGS_KEY);
+        if (data) {
+            return { ...DEFAULT_SETTINGS, ...JSON.parse(data) };
+        }
+    } catch (e) {
+        console.warn('Failed to load settings from localStorage', e);
+    }
     return DEFAULT_SETTINGS;
 };
 
 export const saveAppSettings = (settings: AppSettings) => {
-    // Deprecated: Settings are saved to Supabase
-    // We can still trigger event for immediate UI updates if needed, but avoiding local persistence
-    // localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    // Keep for backward compatibility, but primary storage is Supabase
+    try {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    } catch (e) {
+        console.warn('Failed to save settings to localStorage', e);
+    }
 };
 
 export const getUserProfile = (): UserProfile => {
-    // Deprecated: Profile should be loaded from Auth/Supabase
+    // Fallback: Try localStorage first, then defaults
+    try {
+        const data = localStorage.getItem(PROFILE_KEY);
+        if (data) {
+            const profile = JSON.parse(data);
+            // Don't return guest profile
+            if (profile.email !== 'guest@example.com') {
+                return { ...DEFAULT_PROFILE, ...profile };
+            }
+        }
+    } catch (e) {
+        console.warn('Failed to load profile from localStorage', e);
+    }
     return DEFAULT_PROFILE;
 };
 
