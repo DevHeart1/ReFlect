@@ -35,11 +35,17 @@ export const authService = {
 
         // Sync with local storage for faster initial loads elsewhere
         try {
-            const { saveUserProfile } = await import('../utils/storage');
-            // We pass mappedUser but cast or ensure it matches UserProfile. 
-            // User extends UserProfile so it's compatible.
-            saveUserProfile(mappedUser);
+            const { saveUserProfile, getUserProfile } = await import('../utils/storage');
+
+            // Optimization: Only write if different to save IO and avoid quota errors if full
+            const currentLocal = getUserProfile();
+            const hasChanged = JSON.stringify(currentLocal) !== JSON.stringify(mappedUser);
+
+            if (hasChanged) {
+                saveUserProfile(mappedUser);
+            }
         } catch (e) {
+            // Ignore quota errors here as this is just a cache
             console.warn('Failed to sync user to local storage', e);
         }
 

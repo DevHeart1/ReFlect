@@ -57,4 +57,22 @@ export const initDatabase = async (initialTemplates?: Template[]) => {
     if (initialTemplates && (await db.templates.count() === 0)) {
         await db.templates.bulkPut(initialTemplates);
     }
+    // Cleanup Legacy Data to free up space for Auth (Post-Migration)
+    // We check if we have data in IndexedDB to verify migration happened/exists
+    const currentProfileCount = await db.profile.count();
+    if (currentProfileCount > 0) {
+        const legacyKeys = [
+            'reflect_journal_entries',
+            'reflect_mood_checkins',
+            'reflect_app_settings',
+            'reflect_user_profile'
+        ];
+
+        legacyKeys.forEach(key => {
+            if (localStorage.getItem(key)) {
+                localStorage.removeItem(key);
+                console.log(`Cleaned up legacy storage key: ${key}`);
+            }
+        });
+    }
 };

@@ -217,7 +217,14 @@ const App: React.FC = () => {
     };
     applySettings();
 
-    const handleAuthChange = async () => {
+    const handleAuthChange = async (e?: Event) => {
+      // If triggered by storage event, check key
+      if (e instanceof StorageEvent) {
+        if (e.key && !e.key.startsWith('sb-') && !e.key.startsWith('reflect_')) {
+          return; // Ignore unrelated storage changes
+        }
+      }
+
       const session = await authService.getCurrentSession();
       setIsAuthenticated(!!session);
       if (session) await fetchData();
