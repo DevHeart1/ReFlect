@@ -458,9 +458,14 @@ const App: React.FC = () => {
       if (user) {
         // Trigger auth-change event to update components
         window.dispatchEvent(new Event('auth-change'));
+      } else {
+        // If we can't get the user even now, something is wrong with auth
+        console.warn("Onboarding complete but no user found.");
       }
     } catch (e) {
       console.error("Failed to load data after onboarding", e);
+      // Try to recover by at least dispatching auth-change if we have a session
+      window.dispatchEvent(new Event('auth-change'));
     }
   };
 
