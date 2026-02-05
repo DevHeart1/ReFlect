@@ -182,7 +182,10 @@ const App: React.FC = () => {
 
       try {
         // Check auth - use getCurrentUser to validate session
-        const user = await authService.getCurrentUser();
+        const user = await authService.getCurrentUser().catch(err => {
+          console.error("Failed to get current user:", err);
+          return null;
+        });
 
         const isAuth = !!user;
         setIsAuthenticated(isAuth);
@@ -201,8 +204,13 @@ const App: React.FC = () => {
           await fetchData();
         } else {
           // No valid session - clear any stale data
-          const { supabase } = await import('./utils/supabaseClient');
-          await supabase.auth.signOut();
+          try {
+            const { supabase } = await import('./utils/supabaseClient');
+            await supabase.auth.signOut();
+          } catch (e) {
+            console.warn("Failed to sign out (network issue):", e);
+            // Continue anyway - user is not authenticated
+          }
         }
       } catch (e) {
         console.error("App initialization failed", e);
