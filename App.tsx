@@ -259,16 +259,44 @@ const App: React.FC = () => {
     try {
       // Dynamic import to avoid cycles or ensure service is ready
       const { supabaseService } = await import('./services/supabaseService');
-      const [fetchedEntries, fetchedMoods] = await Promise.all([
+      const currentUser = await authService.getCurrentUser();
+
+      const [fetchedEntries, fetchedMoods, fetchedTemplates, fetchedSettings] = await Promise.all([
         supabaseService.getEntries(),
-        supabaseService.getMoods()
+        supabaseService.getMoods(),
+        currentUser ? supabaseService.getTemplates(currentUser.id) : Promise.resolve([]),
+        currentUser ? supabaseService.getUserSettings(currentUser.id) : Promise.resolve(null)
       ]);
+
       setEntries(fetchedEntries);
       setMoods(fetchedMoods);
+      if (fetchedTemplates && fetchedTemplates.length > 0) {
+        setTemplates(fetchedTemplates);
+      } else {
+        // If no cloud templates, maybe seed default ones? 
+        // For now, keep defaults if empty, but user can save new ones to cloud
+      }
 
-      // Optionally fetch templates from DB if you store them there
-      // const fetchedTemplates = await supabaseService.getTemplates();
-      // setTemplates(fetchedTemplates);
+      // Apply Cloud Settings
+      if (fetchedSettings) {
+        // TODO: Improve this to update a context or global state
+        // For now, we apply visually
+        const root = window.document.documentElement;
+
+        // Theme
+        root.classList.remove('light', 'dark');
+        let effectiveTheme = fetchedSettings.theme;
+        if (effectiveTheme === 'system') {
+          const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          effectiveTheme = systemDark ? 'dark' : 'light';
+        }
+        root.classList.add(effectiveTheme);
+
+        // Font logic... (reused)
+        const fontSizes = { 1: '87.5%', 2: '100%', 3: '112.5%' };
+        root.style.fontSize = fontSizes[fetchedSettings.fontSize as 1 | 2 | 3] || '100%';
+      }
+
     } catch (e) {
       console.error("Failed to fetch data", e);
     }
@@ -383,10 +411,19 @@ const App: React.FC = () => {
   };
 
   const handleAddTemplate = async (newTemplate: Template) => {
-    // Keep templates local or DB? 
-    // For now, let's keep basic templates array state + local persistence if needed
-    // or just append to state
-    setTemplates(prev => [...prev, newTemplate]);
+    try {
+      const { supabaseService } = await import('./services/supabaseService');
+      const currentUser = await authService.getCurrentUser();
+      if (currentUser) {
+        await supabaseService.addTemplate({ ...newTemplate, userId: currentUser.id });
+        // Refresh
+        const fetchedTemplates = await supabaseService.getTemplates(currentUser.id);
+        setTemplates(fetchedTemplates);
+      }
+    } catch (e) {
+      console.error("Failed to save template", e);
+      // Fallback or error toast
+    }
   };
 
   const handleSignIn = () => {

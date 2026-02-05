@@ -123,25 +123,20 @@ export const DEFAULT_PROFILE: UserProfile = {
 };
 
 export const getAppSettings = (): AppSettings => {
-    try {
-        const data = localStorage.getItem(SETTINGS_KEY);
-        return data ? { ...DEFAULT_SETTINGS, ...JSON.parse(data) } : DEFAULT_SETTINGS;
-    } catch (e) {
-        return DEFAULT_SETTINGS;
-    }
+    // Deprecated: Settings should be loaded from Supabase/Context
+    // Returning defaults to ensure fallbacks
+    return DEFAULT_SETTINGS;
 };
 
 export const saveAppSettings = (settings: AppSettings) => {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    // Deprecated: Settings are saved to Supabase
+    // We can still trigger event for immediate UI updates if needed, but avoiding local persistence
+    // localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 };
 
 export const getUserProfile = (): UserProfile => {
-    try {
-        const data = localStorage.getItem(PROFILE_KEY);
-        return data ? { ...DEFAULT_PROFILE, ...JSON.parse(data) } : DEFAULT_PROFILE;
-    } catch (e) {
-        return DEFAULT_PROFILE;
-    }
+    // Deprecated: Profile should be loaded from Auth/Supabase
+    return DEFAULT_PROFILE;
 };
 
 export const saveUserProfile = (profile: UserProfile) => {

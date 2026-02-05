@@ -199,5 +199,52 @@ export const supabaseService = {
             .upsert({ user_id: userId, ...dbSettings });
 
         if (error) throw error;
+    },
+    // --- Templates ---
+    async getTemplates(userId: string): Promise<Template[]> {
+        const { data, error } = await supabase
+            .from('templates')
+            .select('*')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        return data.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            description: t.description,
+            category: t.category,
+            icon: t.icon,
+            colorTheme: t.color_theme,
+            blocks: t.blocks
+        }));
+    },
+
+    async addTemplate(template: Template & { userId: string }) {
+        const dbTemplate = {
+            user_id: template.userId,
+            title: template.title,
+            description: template.description,
+            category: template.category,
+            icon: template.icon,
+            color_theme: template.colorTheme,
+            blocks: template.blocks
+        };
+
+        const { error } = await supabase
+            .from('templates')
+            .insert(dbTemplate);
+
+        if (error) throw error;
+    },
+
+    async deleteTemplate(id: string) {
+        const { error } = await supabase
+            .from('templates')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
     }
 };
