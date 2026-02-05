@@ -173,23 +173,39 @@ const App: React.FC = () => {
   // Initialize Auth & Data
   useEffect(() => {
     const init = async () => {
-      // Check auth
-      const session = await authService.getCurrentSession();
-      const isAuth = !!session;
-      setIsAuthenticated(isAuth);
-      setIsAuthLoading(false);
+      try {
+        // Initialize DB (migrates data and cleans up legacy storage)
+        await initDatabase();
+      } catch (e) {
+        console.error("DB Initialization failed", e);
+      }
 
-      if (isAuth) {
-        // Trigger Migration if needed
-        try {
-          const { migrateDataToSupabase } = await import('./utils/migration');
-          await migrateDataToSupabase();
-        } catch (e) {
-          console.error("Migration failed", e);
+      try {
+        // Check auth
+        const session = await authService.getCurrentSession().catch(e => {
+          console.error("Session check failed", e);
+          return null;
+        });
+
+        const isAuth = !!session;
+        setIsAuthenticated(isAuth);
+        setIsAuthLoading(false);
+
+        if (isAuth) {
+          // Trigger Migration if needed
+          try {
+            const { migrateDataToSupabase } = await import('./utils/migration');
+            await migrateDataToSupabase();
+          } catch (e) {
+            console.error("Migration failed", e);
+          }
+
+          // Fetch Data
+          await fetchData();
         }
-
-        // Fetch Data
-        await fetchData();
+      } catch (e) {
+        console.error("App initialization failed", e);
+        setIsAuthLoading(false); // Ensure we don't get stuck
       }
     };
     init();
