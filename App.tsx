@@ -446,8 +446,22 @@ const App: React.FC = () => {
     setShowOnboarding(true);
   };
 
-  const handleOnboardingComplete = () => {
+  const handleOnboardingComplete = async () => {
     setShowOnboarding(false);
+
+    // After onboarding, fetch user data from Supabase
+    try {
+      await fetchData();
+
+      // Force auth state refresh to ensure profile is loaded
+      const user = await authService.getCurrentUser();
+      if (user) {
+        // Trigger auth-change event to update components
+        window.dispatchEvent(new Event('auth-change'));
+      }
+    } catch (e) {
+      console.error("Failed to load data after onboarding", e);
+    }
   };
 
   // Auth Guard

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Verify Deployment Headers</title>
+</head>
+
+<body>
+    <h1>Deployment Verification</h1>
+    <button onclick="checkHeaders()">Check Response Headers</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function checkHeaders() {
+            const output = document.getElementById('output');
+            output.textContent = 'Fetching...';
+
+            try {
+                const response = await fetch('https://reflect-amber-nu.vercel.app/', {
+                    method: 'HEAD',
+                    cache: 'no-store'
+                });
+
+                const headers = {};
+                response.headers.forEach((value, key) => {
+                    headers[key] = value;
+                });
+
+                output.textContent = JSON.stringify(headers, null, 2);
+
+                // Check for COOP
+                const coop = response.headers.get('cross-origin-opener-policy');
+                if (coop) {
+                    alert('⚠️ COOP header still present: ' + coop);
+                } else {
+                    alert('✅ No COOP header found!');
+                }
+            } catch (err) {
+                output.textContent = 'Error: ' + err.message;
+            }
+        }
+    </script>
+</body>
+
+</html>
