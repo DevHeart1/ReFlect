@@ -29,8 +29,19 @@ export const authService = {
     },
 
     getCurrentUser: async (): Promise<User | null> => {
-        const { data: { user } } = await supabase.auth.getUser();
+        // 1. Try to get verified user from server
+        let { data: { user }, error } = await supabase.auth.getUser();
+
+        // 2. Fallback to session if network error or checking local state
+        if (error || !user) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                user = session.user;
+            }
+        }
+
         if (!user) return null;
+
         const mappedUser = mapSupabaseUser(user);
 
         // Sync with local storage for faster initial loads elsewhere
