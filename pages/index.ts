@@ -13,4 +13,5 @@ export { GeneralSettingsPage } from './GeneralSettingsPage';
 export { ProfileSettingsPage } from './ProfileSettingsPage';
 export { DataManagementPage } from './DataManagementPage';
 export { NotificationSettingsPage } from './NotificationSettingsPage';
+export { JudyPage } from './JudyPage';
 

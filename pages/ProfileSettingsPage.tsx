@@ -93,10 +93,14 @@ export const ProfileSettingsPage: React.FC = () => {
                     {/* Profile Header */}
                     <div className="flex flex-col md:flex-row md:items-center gap-6">
                         <div className="relative group">
-                            <div
-                                className="h-24 w-24 rounded-2xl bg-center bg-cover border-4 border-white dark:border-gray-800 shadow-soft"
-                                style={{ backgroundImage: `url('${avatarUrl}')` }}
-                            ></div>
+                            <img
+                                src={avatarUrl}
+                                alt={profile.name}
+                                className="h-24 w-24 rounded-2xl object-cover border-4 border-white dark:border-gray-800 shadow-soft"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=User&background=random';
+                                }}
+                            />
                             <input
                                 type="file"
                                 ref={fileInputRef}

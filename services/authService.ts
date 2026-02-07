@@ -30,7 +30,21 @@ export const authService = {
 
     getCurrentUser: async (): Promise<User | null> => {
         // 1. Try to get verified user from server
-        let { data: { user }, error } = await supabase.auth.getUser();
+        let user: SupabaseUser | null = null;
+        let error: any = null;
+        try {
+            const response = await supabase.auth.getUser();
+            user = response.data.user;
+            error = response.error;
+        } catch (e: any) {
+            if (e.name === 'AbortError') {
+                // Request cancelled, likely due to component unmount or rapid navigation
+                // Fallback to session
+                console.debug('Auth getUser aborted');
+            } else {
+                console.warn('Auth getUser failed', e);
+            }
+        }
 
         // 2. Fallback to session if network error or checking local state
         if (error || !user) {

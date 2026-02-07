@@ -25,7 +25,8 @@ import {
   GeneralSettingsPage,
   ProfileSettingsPage,
   DataManagementPage,
-  NotificationSettingsPage
+  NotificationSettingsPage,
+  JudyPage
 } from './pages';
 
 // Initial Mock Data
@@ -517,6 +518,7 @@ const App: React.FC = () => {
               <Route path="/" element={<Dashboard entries={entries} moods={moods} />} />
               <Route path="/mood-tracker" element={<MoodTrackerPage moods={moods} />} />
               <Route path="/insights" element={<InsightsPage entries={entries} moods={moods} />} />
+              <Route path="/judy" element={<JudyPage entries={entries} moods={moods} />} />
               <Route path="/templates" element={<TemplatesPage templates={templates} onAddTemplate={handleAddTemplate} />} />
               <Route path="/templates/builder" element={<TemplateBuilderPage onSaveNewTemplate={handleAddTemplate} />} />
               <Route path="/editor" element={<EditorPage onSave={handleSaveEntry} />} />

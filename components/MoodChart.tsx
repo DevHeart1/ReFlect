@@ -38,7 +38,7 @@ export const MoodChart: React.FC<MoodChartProps> = ({ moods }) => {
   if (!data || data.length === 0) return <div className="h-[160px] w-full bg-gray-50 dark:bg-gray-800/20 rounded-xl animate-pulse"></div>;
 
   return (
-    <div className="w-full h-[160px]">
+    <div className="w-full h-[160px]" style={{ minWidth: 0 }}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
           <defs>
