@@ -74,7 +74,7 @@ export const DailyMoodTracker: React.FC<DailyMoodTrackerProps> = ({ moods }) => 
           <div className="bg-card-light dark:bg-card-dark p-6 rounded-2xl shadow-soft dark:shadow-none dark:border dark:border-gray-800">
             <h3 className="font-bold text-gray-900 dark:text-white mb-4">Weekly Trend</h3>
             <div className="h-64 w-full">
-              <MoodChart />
+              <MoodChart moods={recentMoods} />
             </div>
           </div>
 
