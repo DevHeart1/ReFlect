@@ -58,6 +58,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
   const navItems = [
     { path: '/', label: 'Journal', icon: 'book', exact: true },
     { path: '/insights', label: 'Insights', icon: 'bar_chart' },
+    { path: '/judy', label: 'Judy', icon: 'psychology_alt' },
     { path: '/year-report', label: 'Year Report', icon: 'auto_awesome' },
     { path: '/mood-tracker', label: 'Mood Tracker', icon: 'sentiment_satisfied' },
     { path: '/settings', label: 'Settings', icon: 'settings' },
