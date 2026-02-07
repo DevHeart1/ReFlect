@@ -146,7 +146,7 @@ export const supabaseService = {
             .from('user_settings')
             .select('*')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();
 
         if (!data) return null;
 
