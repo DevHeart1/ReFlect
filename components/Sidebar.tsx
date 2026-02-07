@@ -142,9 +142,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className={`w-full flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'} cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 p-2 rounded-xl transition-colors text-left`}
             >
-              <div
-                className="h-10 w-10 rounded-full bg-center bg-cover border-2 border-white dark:border-gray-700 shadow-sm shrink-0"
-                style={{ backgroundImage: `url('${profile.avatarUrl}')` }}
+              <img
+                src={profile.avatarUrl}
+                alt={profile.name}
+                className="h-10 w-10 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-sm shrink-0"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=User&background=random';
+                }}
               />
               {!isCollapsed && (
                 <>

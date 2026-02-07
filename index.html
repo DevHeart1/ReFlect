@@ -53,6 +53,17 @@
             } catch (e) {
                 console.error('Failed to apply initial theme', e);
             }
+
+            // Filter out noisy GSI/FedCM errors
+            const originalConsoleError = console.error;
+            console.error = function (...args) {
+                if (args[0] && typeof args[0] === 'string') {
+                    if (args[0].includes('FedCM') || args[0].includes('GSI_LOGGER') || args[0].includes('net::ERR_CONNECTION_CLOSED')) {
+                        return;
+                    }
+                }
+                originalConsoleError.apply(console, args);
+            };
         })();
     </script>
 </head>
