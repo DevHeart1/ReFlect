@@ -197,6 +197,14 @@ export const authService = {
         window.dispatchEvent(new Event('profile-updated'));
     },
 
+    resetPassword: async (email: string): Promise<void> => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/settings/profile?reset=true`
+        });
+
+        if (error) throw error;
+    },
+
     deleteAccount: async () => {
         // Get current user before deleting
         const { data: { user } } = await supabase.auth.getUser();
