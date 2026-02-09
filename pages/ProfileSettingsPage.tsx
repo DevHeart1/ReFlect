@@ -245,8 +245,15 @@ export const ProfileSettingsPage: React.FC = () => {
                                         </div>
 
                                         <button
-                                            onClick={() => {
-                                                authService.logout();
+                                            onClick={async () => {
+                                                try {
+                                                    await authService.logout();
+                                                } catch (err) {
+                                                    console.error('Logout failed:', err);
+                                                    // Force redirect anyway
+                                                    localStorage.clear();
+                                                    window.location.href = '/';
+                                                }
                                             }}
                                             className="px-4 py-2 text-sm font-bold text-red-600 bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors border border-red-100 dark:border-red-900/30"
                                         >

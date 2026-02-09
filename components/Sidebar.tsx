@@ -174,7 +174,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, closeMobileMenu }) => 
                     Profile Settings
                   </NavLink>
                   <button
-                    onClick={() => authService.logout()}
+                    onClick={async () => {
+                      try {
+                        await authService.logout();
+                      } catch (err) {
+                        console.error('Logout failed:', err);
+                        // Force redirect anyway
+                        localStorage.clear();
+                        window.location.href = '/';
+                      }
+                    }}
                     className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg w-full text-left"
                   >
                     <span className="material-symbols-outlined text-lg">logout</span>
